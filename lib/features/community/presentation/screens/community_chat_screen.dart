@@ -1,0 +1,495 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:safe/core/design/design.dart';
+import 'package:safe/features/community/domain/models/chat_message.dart';
+import 'package:safe/features/community/presentation/providers/chat_provider.dart';
+
+/// Real-time community chat screen
+class CommunityChatScreen extends ConsumerStatefulWidget {
+  const CommunityChatScreen({super.key});
+
+  @override
+  ConsumerState<CommunityChatScreen> createState() =>
+      _CommunityChatScreenState();
+}
+
+class _CommunityChatScreenState extends ConsumerState<CommunityChatScreen> {
+  final _messageController = TextEditingController();
+  final _scrollController = ScrollController();
+  bool _isSending = false;
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Scroll to the bottom of the message list
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  /// Send a message
+  Future<void> _sendMessage() async {
+    final message = _messageController.text.trim();
+
+    if (message.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Message cannot be empty')),
+      );
+      return;
+    }
+
+    try {
+      setState(() => _isSending = true);
+      _messageController.clear();
+
+      await ref.read(chatNotifierProvider.notifier).sendMessage(message);
+
+      // Scroll to bottom after sending
+      _scrollToBottom();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Message sent'),
+            duration: Duration(milliseconds: 1500),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send: $e')),
+        );
+      }
+      // Restore the message if sending failed
+      _messageController.text = message;
+    } finally {
+      if (mounted) {
+        setState(() => _isSending = false);
+      }
+    }
+  }
+
+  /// Delete a message
+  Future<void> _deleteMessage(String messageId) async {
+    // Confirm deletion
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Message'),
+        content: const Text('Are you sure you want to delete this message?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await ref.read(chatNotifierProvider.notifier).deleteMessage(messageId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Message deleted')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final userInfo = ref.watch(chatUserInfoNotifierProvider);
+    final messagesStream = ref.watch(chatMessagesStreamProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Community Chat'),
+        centerTitle: true,
+        elevation: 0.5,
+        backgroundColor: theme.colorScheme.surface,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_rounded),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Messages list
+          Expanded(
+            child: messagesStream.when(
+              data: (messages) {
+                if (messages.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.chat_bubble_outline,
+                            size: 64,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No messages yet',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Start the conversation!',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Auto-scroll to latest message
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _scrollToBottom();
+                });
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.screenHorizontal,
+                    vertical: AppSpacing.md,
+                  ),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final message = messages[index];
+                    final isCurrentUser =
+                        userInfo.valueOrNull?.userId == message.userId;
+
+                    return _MessageBubble(
+                      message: message,
+                      isCurrentUser: isCurrentUser,
+                      onDelete: () => _deleteMessage(message.id),
+                    );
+                  },
+                );
+              },
+              loading: () => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Connecting to chat...',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Make sure Firestore is set up',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              error: (error, stack) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: theme.colorScheme.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Connection error',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        error.toString().length > 100
+                            ? 'Check your Firestore setup'
+                            : error.toString(),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton.tonal(
+                      onPressed: () => ref.refresh(chatMessagesStreamProvider),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Message input area - Modern style
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: theme.colorScheme.outlineVariant,
+                  width: 0.5,
+                ),
+              ),
+            ),
+            child: userInfo.when(
+              data: (user) {
+                if (user == null) {
+                  return Center(
+                    child: Text(
+                      'Please log in to send messages',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.error,
+                      ),
+                    ),
+                  );
+                }
+
+                return Row(
+                  children: [
+                    // Emoji button
+                    IconButton(
+                      icon: const Icon(Icons.emoji_emotions_outlined),
+                      onPressed: () {},
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    // Message input
+                    Expanded(
+                      child: TextField(
+                        controller: _messageController,
+                        enabled: !_isSending,
+                        maxLines: null,
+                        minLines: 1,
+                        decoration: InputDecoration(
+                          hintText: 'Message...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.outlineVariant,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.primary,
+                              width: 2,
+                            ),
+                          ),
+                          disabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.outlineVariant,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                            vertical: AppSpacing.sm,
+                          ),
+                          isDense: true,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    // Send button
+                    CircleAvatar(
+                      backgroundColor: theme.colorScheme.primary,
+                      radius: 20,
+                      child: IconButton(
+                        onPressed: _isSending ? null : _sendMessage,
+                        icon: _isSending
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation(
+                                    theme.colorScheme.onPrimary,
+                                  ),
+                                ),
+                              )
+                            : Icon(
+                                Icons.send_rounded,
+                                color: theme.colorScheme.onPrimary,
+                              ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(
+                child: Text('Error: $error'),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Message bubble widget
+class _MessageBubble extends ConsumerWidget {
+  final ChatMessage message;
+  final bool isCurrentUser;
+  final VoidCallback onDelete;
+
+  const _MessageBubble({
+    required this.message,
+    required this.isCurrentUser,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
+    return Align(
+      alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: isCurrentUser ? 64 : 0,
+          right: isCurrentUser ? 0 : 64,
+          bottom: AppSpacing.md,
+        ),
+        child: Column(
+          crossAxisAlignment:
+              isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            if (!isCurrentUser) ...[
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: AppSpacing.sm,
+                  bottom: 4,
+                ),
+                child: Text(
+                  message.userName,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+            GestureDetector(
+              onLongPress: isCurrentUser ? onDelete : null,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: isCurrentUser
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(16),
+                    topRight: const Radius.circular(16),
+                    bottomLeft: Radius.circular(isCurrentUser ? 16 : 4),
+                    bottomRight: Radius.circular(isCurrentUser ? 4 : 16),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      message.message,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: isCurrentUser
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatTime(message.createdAt),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: isCurrentUser
+                            ? theme.colorScheme.onPrimary.withValues(alpha: 0.7)
+                            : theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.7),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final messageDate =
+        DateTime(dateTime.year, dateTime.month, dateTime.day);
+
+    String dateStr;
+    if (messageDate == today) {
+      dateStr = 'Today';
+    } else if (messageDate == yesterday) {
+      dateStr = 'Yesterday';
+    } else {
+      dateStr = '${dateTime.month}/${dateTime.day}/${dateTime.year}';
+    }
+
+    final timeStr =
+        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+
+    return timeStr;
+  }
+}

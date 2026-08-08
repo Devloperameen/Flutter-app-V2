@@ -1,0 +1,96 @@
+import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
+import 'package:safe/core/design/design.dart';
+
+class PostVideoPlayer extends StatefulWidget {
+  final String videoUrl;
+
+  const PostVideoPlayer({super.key, required this.videoUrl});
+
+  @override
+  State<PostVideoPlayer> createState() => _PostVideoPlayerState();
+}
+
+class _PostVideoPlayerState extends State<PostVideoPlayer> {
+  late VideoPlayerController _controller;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
+      ..initialize().then((_) {
+        setState(() {
+          _isInitialized = true;
+        });
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _togglePlayPause() {
+    setState(() {
+      if (_controller.value.isPlaying) {
+        _controller.pause();
+      } else {
+        _controller.play();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return Container(
+        width: double.infinity,
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.black12,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: AspectRatio(
+        aspectRatio: _controller.value.aspectRatio,
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            VideoPlayer(_controller),
+            GestureDetector(
+              onTap: _togglePlayPause,
+              child: Container(
+                color: Colors.transparent,
+                child: Center(
+                  child: Icon(
+                    _controller.value.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                    size: 64,
+                    color: Colors.white.withValues(alpha: 0.7),
+                  ),
+                ),
+              ),
+            ),
+            VideoProgressIndicator(
+              _controller,
+              allowScrubbing: true,
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm, horizontal: AppSpacing.md),
+              colors: VideoProgressColors(
+                playedColor: Theme.of(context).colorScheme.primary,
+                backgroundColor: Colors.white24,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

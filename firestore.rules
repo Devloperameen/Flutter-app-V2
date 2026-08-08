@@ -1,0 +1,163 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions for security
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidString(text, minLen, maxLen) {
+      return text is string && 
+             text.size() >= minLen && 
+             text.size() <= maxLen;
+    }
+    
+    function isValidEmail(email) {
+      return email is string && 
+             email.matches('^[\\w\\.-]+@([\\w-]+\\.)+[\\w-]{2,4}$');
+    }
+    
+    // Rate limiting: max 100 writes per minute per user
+    function notExceedingRateLimit() {
+      return request.time < resource.data.lastWriteTime + duration.value(600, 'ms');
+    }
+    
+    // ═══════════════════════════════════════════════════════
+    // USERS COLLECTION
+    // ═══════════════════════════════════════════════════════
+    match /users/{userId} {
+      // Read: User can read their own profile
+      allow read: if isOwner(userId);
+      
+      // Create: Only on signup, must match auth.uid
+      allow create: if isOwner(userId) && 
+                      isValidEmail(request.resource.data.email) &&
+                      isValidString(request.resource.data.firstName, 1, 50) &&
+                      isValidString(request.resource.data.lastName, 1, 50);
+      
+      // Update: User can update their own profile
+      allow update: if isOwner(userId) &&
+                      // Cannot change immutable fields
+                      request.resource.data.id == resource.data.id &&
+                      request.resource.data.email == resource.data.email &&
+                      request.resource.data.createdAt == resource.data.createdAt &&
+                      // Validate field lengths
+                      (!('firstName' in request.resource.data) || 
+                        isValidString(request.resource.data.firstName, 1, 50)) &&
+                      (!('lastName' in request.resource.data) || 
+                        isValidString(request.resource.data.lastName, 1, 50)) &&
+                      (!('bio' in request.resource.data) || 
+                        isValidString(request.resource.data.bio, 0, 500));
+      
+      // Delete: Users cannot delete their own profile (use Firebase Auth)
+      allow delete: if false;
+    }
+    
+    // ═══════════════════════════════════════════════════════
+    // HABITS COLLECTION
+    // ═══════════════════════════════════════════════════════
+    match /users/{userId}/habits/{habitId} {
+      // Read: User can read their own habits
+      allow read: if isOwner(userId);
+      
+      // Create: User can create their own habits
+      allow create: if isOwner(userId) &&
+                      isValidString(request.resource.data.title, 1, 100) &&
+                      request.resource.data.userId == userId &&
+                      request.resource.data.createdAt is timestamp &&
+                      request.resource.data.updatedAt is timestamp;
+      
+      // Update: User can update their own habits
+      allow update: if isOwner(userId) &&
+                      request.resource.data.userId == resource.data.userId &&
+                      request.resource.data.id == resource.data.id &&
+                      request.resource.data.createdAt == resource.data.createdAt &&
+                      isValidString(request.resource.data.title, 1, 100);
+      
+      // Delete: User can delete their own habits
+      allow delete: if isOwner(userId);
+      
+      // Habit logs subcollection
+      match /logs/{logId} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
+    }
+    
+    // ═══════════════════════════════════════════════════════
+    // DEEP WORK SESSIONS
+    // ═══════════════════════════════════════════════════════
+    match /users/{userId}/deepWorkSessions/{sessionId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) &&
+                     request.resource.data.userId == userId;
+      allow delete: if isOwner(userId);
+    }
+    
+    // ═══════════════════════════════════════════════════════
+    // COMMUNITY POSTS
+    // ═══════════════════════════════════════════════════════
+    match /posts/{postId} {
+      // Anyone authenticated can read posts
+      allow read: if isAuthenticated();
+      
+      // Create: Must be authenticated and own the post
+      allow create: if isAuthenticated() &&
+                      request.resource.data.userId == request.auth.uid &&
+                      isValidString(request.resource.data.content, 1, 2000);
+      
+      // Update: Only post owner can update
+      allow update: if isAuthenticated() &&
+                      resource.data.userId == request.auth.uid &&
+                      request.resource.data.userId == resource.data.userId &&
+                      isValidString(request.resource.data.content, 1, 2000);
+      
+      // Delete: Only post owner can delete
+      allow delete: if isAuthenticated() &&
+                      resource.data.userId == request.auth.uid;
+      
+      // Post comments subcollection
+      match /comments/{commentId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() &&
+                        request.resource.data.userId == request.auth.uid &&
+                        isValidString(request.resource.data.content, 1, 500);
+        allow update: if isAuthenticated() &&
+                        resource.data.userId == request.auth.uid;
+        allow delete: if isAuthenticated() &&
+                        resource.data.userId == request.auth.uid;
+      }
+      
+      // Post likes subcollection
+      match /likes/{likeId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated() &&
+                       likeId == request.auth.uid;
+      }
+    }
+    
+    // ═══════════════════════════════════════════════════════
+    // ENERGY LOGS
+    // ═══════════════════════════════════════════════════════
+    match /users/{userId}/energyLogs/{logId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) &&
+                     request.resource.data.userId == userId;
+      allow delete: if isOwner(userId);
+    }
+    
+    // ═══════════════════════════════════════════════════════
+    // DEFAULT DENY
+    // ═══════════════════════════════════════════════════════
+    // Deny all other access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

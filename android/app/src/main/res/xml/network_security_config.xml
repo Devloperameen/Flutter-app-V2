@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow localhost for development with cleartext -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+    </domain-config>
+    
+    <!-- Production domains - HTTPS only, no cleartext -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">api.safe.app</domain>
+        <domain includeSubdomains="true">safe-5723a.firebaseapp.com</domain>
+        <domain includeSubdomains="true">firestore.googleapis.com</domain>
+        
+        <!-- Certificate pinning for api.safe.app (add your actual pins) -->
+        <pin-set expiration="2025-12-31">
+            <!-- TODO: Replace with your production server's certificate SHA-256 fingerprints -->
+            <!-- Get fingerprints from: openssl s_client -servername api.safe.app -connect api.safe.app:443 | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | base64 -->
+            <pin digest="SHA-256">AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</pin>
+            <pin digest="SHA-256">BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=</pin>
+        </pin-set>
+    </domain-config>
+</network-security-config>

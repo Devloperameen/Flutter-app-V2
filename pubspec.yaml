@@ -1,0 +1,75 @@
+name: safe
+description: "SAFE — Personal Transformation Platform. Help millions become the best version of themselves."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Design
+  cupertino_icons: ^1.0.8
+  flutter_svg: ^2.1.0
+  flutter_animate: ^4.5.2
+  shimmer: ^3.0.0
+  cached_network_image: ^3.3.1
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # Networking
+  dio: ^5.7.0
+
+  # Code Generation annotations (v2 family — matches model syntax)
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Secure Storage (SECURITY FIX)
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.5.3
+
+  # Input sanitization (SECURITY FIX)
+  html_unescape: ^2.0.0
+
+  # Logging
+  logger: ^2.4.0
+
+  # UUID
+  uuid: ^4.0.0
+
+  # Calendar
+  table_calendar: ^3.1.0
+
+  # Firebase
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.0
+  cloud_firestore: ^5.6.0
+
+  # Audio Playback
+  just_audio: ^0.9.36
+  audio_session: ^0.1.21
+  youtube_player_iframe: ^6.0.2
+  webview_flutter: ^4.14.1
+  image_picker: ^1.2.3
+  firebase_storage: ^12.4.10
+  video_player: ^2.13.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # Code Generation (v2 generators — match the freezed_annotation ^2.4.4 above)
+  build_runner: ^2.4.15
+  freezed: ^2.5.7
+  json_serializable: ^6.9.5
+  riverpod_generator: ^2.6.4
+
+flutter:
+  uses-material-design: true
