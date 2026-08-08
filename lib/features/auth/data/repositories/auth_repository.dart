@@ -5,7 +5,6 @@ import 'package:safe/core/storage/secure_storage_service.dart';
 import 'package:safe/core/storage/storage_keys.dart';
 import 'package:safe/core/utils/app_logger.dart';
 import 'package:safe/features/auth/data/datasources/auth_firebase_datasource.dart';
-import 'package:safe/features/auth/data/datasources/auth_mock_datasource.dart';
 import 'package:safe/features/auth/domain/models/user.dart';
 import 'package:safe/core/providers/core_providers.dart';
 
@@ -14,11 +13,9 @@ part 'auth_repository.g.dart';
 @riverpod
 AuthRepository authRepository(AuthRepositoryRef ref) {
   final firebaseDataSource = AuthFirebaseDataSource();
-  final mockDataSource = AuthMockDataSource();
   final secureStorage = ref.watch(secureStorageProvider);
   return AuthRepository(
     firebaseDataSource: firebaseDataSource,
-    mockDataSource: mockDataSource,
     secureStorage: secureStorage,
   );
 }
@@ -26,52 +23,23 @@ AuthRepository authRepository(AuthRepositoryRef ref) {
 class AuthRepository {
   AuthRepository({
     required this.firebaseDataSource,
-    required this.mockDataSource,
     required this.secureStorage,
   });
 
   final AuthFirebaseDataSource firebaseDataSource;
-  final AuthMockDataSource mockDataSource;
   final SecureStorageService secureStorage;
 
-  /// Login user with Firebase Auth or Mock Data
+  /// Login user with Firebase Auth
   Future<User> login(String email, String password) async {
     try {
-      // Try Firebase first, fall back to mock if it fails
-      try {
-        final user = await firebaseDataSource.login(
-          email: email,
-          password: password,
-        );
-        await _persistUser(user);
-        return user;
-      } catch (firebaseError, firebaseStack) {
-        log.w('⚠️ Firebase login failed: $firebaseError');
-        // Always fall back to mock datasource on any Firebase error
-        try {
-          log.d('📱 Attempting mock datasource login for: $email');
-          final user = await mockDataSource.login(
-            email: email,
-            password: password,
-          );
-          log.i('✅ Mock login successful for: $email');
-          await _persistUser(user);
-          return user;
-        } catch (mockError, mockStack) {
-          log.e('❌ Mock login also failed: $mockError', error: mockError, stackTrace: mockStack);
-          // Both failed - throw a meaningful error
-          throw ServerFailure(
-            message: 'Login failed. Firebase: $firebaseError, Mock: $mockError',
-            stackTrace: mockStack,
-          );
-        }
-      }
+      final user = await firebaseDataSource.login(
+        email: email,
+        password: password,
+      );
+      await _persistUser(user);
+      return user;
     } catch (e, stackTrace) {
-      // If we get here, both methods failed
-      if (e is ServerFailure) {
-        rethrow;
-      }
-      log.e('❌ Final login error: $e', error: e, stackTrace: stackTrace);
+      log.e('❌ Login error: $e', error: e, stackTrace: stackTrace);
       throw ServerFailure(
         message: '$e',
         stackTrace: stackTrace,
@@ -79,7 +47,7 @@ class AuthRepository {
     }
   }
 
-  /// Register new user with Firebase Auth or Mock Data
+  /// Register new user with Firebase Auth
   Future<User> register(
     String firstName,
     String lastName,
@@ -87,29 +55,16 @@ class AuthRepository {
     String password,
   ) async {
     try {
-      // Try Firebase first, fall back to mock if it fails
-      try {
-        final user = await firebaseDataSource.register(
-          email: email,
-          password: password,
-          firstName: firstName,
-          lastName: lastName,
-        );
-        await _persistUser(user);
-        return user;
-      } catch (firebaseError) {
-        print('⚠️ Firebase register failed, using mock datasource: $firebaseError');
-        // Fall back to mock datasource
-        final user = await mockDataSource.register(
-          email: email,
-          password: password,
-          firstName: firstName,
-          lastName: lastName,
-        );
-        await _persistUser(user);
-        return user;
-      }
+      final user = await firebaseDataSource.register(
+        email: email,
+        password: password,
+        firstName: firstName,
+        lastName: lastName,
+      );
+      await _persistUser(user);
+      return user;
     } catch (e, stackTrace) {
+      log.e('❌ Register error: $e', error: e, stackTrace: stackTrace);
       throw ServerFailure(
         message: '$e',
         stackTrace: stackTrace,
@@ -144,14 +99,10 @@ class AuthRepository {
   /// Logout user
   Future<void> logout() async {
     try {
-      // Try Firebase first, then mock
-      try {
-        await firebaseDataSource.logout();
-      } catch (_) {
-        await mockDataSource.logout();
-      }
-    } catch (_) {
-      // Ignore network errors on logout
+      await firebaseDataSource.logout();
+    } catch (e) {
+      log.w('⚠️ Logout error (ignored): $e');
+      // Ignore errors on logout
     } finally {
       await _clearUser();
     }
@@ -211,30 +162,17 @@ class AuthRepository {
 
   /// Check if user is authenticated
   bool isAuthenticated() {
-    return firebaseDataSource.isAuthenticated() || mockDataSource.isAuthenticated();
+    return firebaseDataSource.isAuthenticated();
   }
 
   /// Get current user (without making network call)
-  /// Checks Firebase first, then mock datasource
   User? getCurrentUser() {
-    final fbUser = firebaseDataSource.getCurrentUser();
-    if (fbUser != null) {
-      return fbUser;
-    }
-    // Fall back to mock datasource
-    return mockDataSource.getCurrentUser();
+    return firebaseDataSource.getCurrentUser();
   }
 
   /// Get current user ID
-  /// Checks Firebase first, then mock datasource
   String? getCurrentUserId() {
-    final fbUserId = firebaseDataSource.getCurrentUserId();
-    if (fbUserId != null) {
-      return fbUserId;
-    }
-    // Fall back to mock datasource
-    final mockUser = mockDataSource.getCurrentUser();
-    return mockUser?.id;
+    return firebaseDataSource.getCurrentUserId();
   }
 
   /// Get authentication state stream

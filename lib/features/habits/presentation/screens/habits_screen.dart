@@ -13,7 +13,7 @@ import 'package:safe/features/habits/presentation/widgets/emoji_picker.dart';
 import 'package:safe/features/habits/presentation/widgets/color_picker.dart';
 import 'package:safe/core/utils/app_logger.dart';
 import 'package:uuid/uuid.dart';
-import 'package:safe/features/habits/data/repositories/habit_repository_impl.dart';
+import 'package:safe/features/habits/data/repositories/habit_repository.dart';
 import 'package:safe/features/auth/data/repositories/auth_repository.dart';
 
 class HabitsScreen extends ConsumerStatefulWidget {

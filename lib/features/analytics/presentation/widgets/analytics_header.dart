@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:safe/features/analytics/domain/models/analytics_period.dart';
-import 'package:safe/features/analytics/presentation/notifiers/analytics_notifier.dart';
+import 'package:safe/features/analytics/presentation/controllers/analytics_notifier.dart';
 
 /// Header with period selector and category filter
 class AnalyticsHeader extends ConsumerWidget {

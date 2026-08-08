@@ -1,9 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:safe/features/analytics/presentation/notifiers/analytics_notifier.dart';
+import 'package:safe/features/analytics/presentation/controllers/analytics_notifier.dart';
 import 'package:safe/features/analytics/domain/models/analytics_period.dart';
 import 'package:safe/features/analytics/domain/models/habit_analytics.dart';
 import 'package:safe/features/auth/data/repositories/auth_repository.dart';
-import 'package:safe/features/analytics/data/repositories/analytics_repository_impl.dart';
+import 'package:safe/features/analytics/data/repositories/analytics_repository.dart';
 import 'package:safe/features/habits/presentation/providers/habits_stream_provider.dart';
 
 part 'analytics_provider.g.dart';

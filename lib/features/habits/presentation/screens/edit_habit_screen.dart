@@ -7,7 +7,7 @@ import 'package:safe/core/design/app_spacing.dart';
 import 'package:safe/core/utils/app_logger.dart';
 import 'package:safe/features/habits/domain/constants/habit_constants.dart';
 import 'package:safe/features/habits/domain/models/habit.dart';
-import 'package:safe/features/habits/data/repositories/habit_repository_impl.dart';
+import 'package:safe/features/habits/data/repositories/habit_repository.dart';
 import 'package:safe/features/auth/data/repositories/auth_repository.dart';
 import 'package:safe/features/habits/presentation/widgets/emoji_picker.dart';
 import 'package:safe/features/habits/presentation/widgets/color_picker.dart';

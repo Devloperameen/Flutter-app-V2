@@ -10,7 +10,7 @@ import 'package:safe/features/analytics/domain/services/insights_generator.dart'
 import 'package:safe/features/focus_timer/domain/models/focus_session.dart';
 import 'package:safe/features/habits/domain/models/habit.dart';
 
-part 'analytics_repository_impl.g.dart';
+part 'analytics_repository.g.dart';
 
 /// Riverpod provider for AnalyticsRepository
 @riverpod

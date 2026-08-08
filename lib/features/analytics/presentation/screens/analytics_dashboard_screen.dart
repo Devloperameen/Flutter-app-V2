@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:safe/features/analytics/domain/models/analytics_period.dart';
-import 'package:safe/features/analytics/presentation/notifiers/analytics_notifier.dart';
+import 'package:safe/features/analytics/presentation/controllers/analytics_notifier.dart';
 import 'package:safe/features/analytics/presentation/widgets/analytics_header.dart';
 import 'package:safe/features/analytics/presentation/widgets/empty_state_widget.dart';
 import 'package:safe/features/analytics/presentation/widgets/habit_metrics_widget.dart';

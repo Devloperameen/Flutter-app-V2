@@ -5,7 +5,7 @@ import 'package:safe/features/habits/data/datasources/mock_habit_datasource.dart
 import 'package:safe/features/habits/domain/models/habit.dart';
 import 'package:safe/core/utils/app_logger.dart';
 
-part 'habit_repository_impl.g.dart';
+part 'habit_repository.g.dart';
 
 /// Riverpod provider for HabitRepository
 /// Using Firestore datasource with production security rules
