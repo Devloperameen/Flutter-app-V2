@@ -11,6 +11,12 @@ import 'package:safe/features/community/domain/models/post.dart';
 part 'community_provider.g.dart';
 
 @riverpod
+Stream<List<Post>> communityPostsStream(CommunityPostsStreamRef ref) {
+  final repository = ref.watch(communityRepositoryProvider);
+  return repository.getMessagesStream();
+}
+
+@riverpod
 class CommunityNotifier extends _$CommunityNotifier {
   @override
   FutureOr<List<Post>> build() async {
@@ -55,6 +61,32 @@ class CommunityNotifier extends _$CommunityNotifier {
     } catch (e, st) {
       // 3. Rollback on failure — restore posts, not a full error state
       state = previousState;
+    }
+  }
+
+  /// Add a comment to a post
+  Future<void> addComment(String postId, String comment) async {
+    try {
+      final repository = ref.read(communityRepositoryProvider);
+      final authUser = ref.read(authNotifierProvider).valueOrNull;
+      final userId =
+          authUser?.id ?? 'anonymous_${const Uuid().v4().substring(0, 8)}';
+      final userName = authUser != null
+          ? '${authUser.firstName} ${authUser.lastName}'.trim()
+          : 'Anonymous';
+
+      await repository.addComment(
+        postId: postId,
+        userId: userId,
+        userName: userName,
+        comment: comment,
+      );
+
+      // Refresh posts to show updated comment count
+      await refresh();
+    } catch (e, st) {
+      log.e('❌ addComment failed: $e', stackTrace: st);
+      rethrow;
     }
   }
 

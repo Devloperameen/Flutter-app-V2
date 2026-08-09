@@ -205,7 +205,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildActionChip(theme, Icons.add_circle_outline, 'Add Story', () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Stories coming soon!')));
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Row(
+                        children: [
+                          Icon(Icons.hourglass_empty_rounded, color: Colors.blue),
+                          SizedBox(width: 8),
+                          Text('Coming Soon'),
+                        ],
+                      ),
+                      content: const Text('Stories feature is under development and will be available soon!'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Got it'),
+                        ),
+                      ],
+                    ),
+                  );
                 }),
                 const SizedBox(width: 12),
                 _buildActionChip(theme, Icons.post_add, 'New Post', () {

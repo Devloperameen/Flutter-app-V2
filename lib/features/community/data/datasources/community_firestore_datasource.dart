@@ -163,6 +163,21 @@ class CommunityFirestoreDataSource {
     }
   }
 
+  /// Add comment (alias for replyToMessage)
+  Future<void> addComment({
+    required String postId,
+    required String userId,
+    required String userName,
+    required String comment,
+  }) async {
+    await replyToMessage(
+      messageId: postId,
+      userId: userId,
+      userName: userName,
+      reply: comment,
+    );
+  }
+
   /// Get comments for a post (stream)
   /// Queries from 'comments' subcollection (not 'replies')
   Stream<List<Map<String, dynamic>>> getRepliesStream(String messageId) {

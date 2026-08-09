@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:safe/core/design/design.dart';
 import 'package:safe/features/community/domain/models/chat_message.dart';
 import 'package:safe/features/community/presentation/providers/chat_provider.dart';
@@ -17,6 +18,7 @@ class _CommunityChatScreenState extends ConsumerState<CommunityChatScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   bool _isSending = false;
+  bool _showEmojiPicker = false;
 
   @override
   void dispose() {
@@ -127,18 +129,7 @@ class _CommunityChatScreenState extends ConsumerState<CommunityChatScreen> {
     final messagesStream = ref.watch(chatMessagesStreamProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Community Chat'),
-        centerTitle: true,
-        elevation: 0.5,
-        backgroundColor: theme.colorScheme.surface,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_rounded),
-            onPressed: () {},
-          ),
-        ],
-      ),
+      backgroundColor: theme.colorScheme.surface,
       body: Column(
         children: [
           // Messages list
@@ -288,74 +279,103 @@ class _CommunityChatScreenState extends ConsumerState<CommunityChatScreen> {
                   );
                 }
 
-                return Row(
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Emoji button
-                    IconButton(
-                      icon: const Icon(Icons.emoji_emotions_outlined),
-                      onPressed: () {},
-                      color: theme.colorScheme.onSurfaceVariant,
+                    Row(
+                      children: [
+                        // Emoji button
+                        IconButton(
+                          icon: const Icon(Icons.emoji_emotions_outlined),
+                          onPressed: () {
+                            setState(() => _showEmojiPicker = !_showEmojiPicker);
+                          },
+                          color: _showEmojiPicker
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurfaceVariant,
+                        ),
+                        // Message input
+                        Expanded(
+                          child: TextField(
+                            controller: _messageController,
+                            enabled: !_isSending,
+                            maxLines: null,
+                            minLines: 1,
+                            decoration: InputDecoration(
+                              hintText: 'Message...',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide(
+                                  color: theme.colorScheme.outlineVariant,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide(
+                                  color: theme.colorScheme.primary,
+                                  width: 2,
+                                ),
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide(
+                                  color: theme.colorScheme.outlineVariant,
+                                ),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.md,
+                                vertical: AppSpacing.sm,
+                              ),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        // Send button
+                        CircleAvatar(
+                          backgroundColor: theme.colorScheme.primary,
+                          radius: 20,
+                          child: IconButton(
+                            onPressed: _isSending ? null : _sendMessage,
+                            icon: _isSending
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation(
+                                        theme.colorScheme.onPrimary,
+                                      ),
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.send_rounded,
+                                    color: theme.colorScheme.onPrimary,
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
-                    // Message input
-                    Expanded(
-                      child: TextField(
-                        controller: _messageController,
-                        enabled: !_isSending,
-                        maxLines: null,
-                        minLines: 1,
-                        decoration: InputDecoration(
-                          hintText: 'Message...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.outlineVariant,
-                            ),
+                    // Emoji Picker
+                    if (_showEmojiPicker)
+                      SizedBox(
+                        height: 250,
+                        child: EmojiPicker(
+                          onEmojiSelected: (category, emoji) {
+                            _messageController.text += emoji.emoji;
+                          },
+                          onBackspacePressed: () {
+                            if (_messageController.text.isNotEmpty) {
+                              _messageController.text = _messageController.text
+                                  .substring(0, _messageController.text.length - 1);
+                            }
+                          },
+                          config: Config(
+                            height: 250,
+                            checkPlatformCompatibility: true,
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.primary,
-                              width: 2,
-                            ),
-                          ),
-                          disabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.outlineVariant,
-                            ),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.md,
-                            vertical: AppSpacing.sm,
-                          ),
-                          isDense: true,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    // Send button
-                    CircleAvatar(
-                      backgroundColor: theme.colorScheme.primary,
-                      radius: 20,
-                      child: IconButton(
-                        onPressed: _isSending ? null : _sendMessage,
-                        icon: _isSending
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation(
-                                    theme.colorScheme.onPrimary,
-                                  ),
-                                ),
-                              )
-                            : Icon(
-                                Icons.send_rounded,
-                                color: theme.colorScheme.onPrimary,
-                              ),
-                      ),
-                    ),
                   ],
                 );
               },
@@ -383,9 +403,26 @@ class _MessageBubble extends ConsumerWidget {
     required this.onDelete,
   });
 
+  /// Generate a consistent color based on user ID
+  static Color _getUserColor(String userId) {
+    final colors = [
+      const Color(0xFF2196F3), // Blue
+      const Color(0xFF4CAF50), // Green
+      const Color(0xFFFF9800), // Orange
+      const Color(0xFFE91E63), // Pink
+      const Color(0xFF9C27B0), // Purple
+      const Color(0xFF00BCD4), // Cyan
+      const Color(0xFFF44336), // Red
+      const Color(0xFF795548), // Brown
+    ];
+    final hash = userId.hashCode.abs();
+    return colors[hash % colors.length];
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final userColor = _getUserColor(message.userId);
 
     return Align(
       alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -405,12 +442,25 @@ class _MessageBubble extends ConsumerWidget {
                   left: AppSpacing.sm,
                   bottom: 4,
                 ),
-                child: Text(
-                  message.userName,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: userColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      message.userName,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: userColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -424,13 +474,19 @@ class _MessageBubble extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: isCurrentUser
                       ? theme.colorScheme.primary
-                      : theme.colorScheme.surfaceContainerHighest,
+                      : userColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
                     bottomLeft: Radius.circular(isCurrentUser ? 16 : 4),
                     bottomRight: Radius.circular(isCurrentUser ? 4 : 16),
                   ),
+                  border: isCurrentUser
+                      ? null
+                      : Border.all(
+                          color: userColor.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.05),
@@ -456,8 +512,7 @@ class _MessageBubble extends ConsumerWidget {
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: isCurrentUser
                             ? theme.colorScheme.onPrimary.withValues(alpha: 0.7)
-                            : theme.colorScheme.onSurfaceVariant
-                                .withValues(alpha: 0.7),
+                            : userColor.withValues(alpha: 0.7),
                         fontSize: 10,
                       ),
                     ),

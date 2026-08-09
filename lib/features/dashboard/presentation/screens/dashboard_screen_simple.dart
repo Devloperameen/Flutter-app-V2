@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:safe/core/design/design.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:safe/features/auth/presentation/providers/auth_provider.dart';
+import 'package:intl/intl.dart';
+import 'package:safe/features/auth/domain/models/user.dart';
 
 /// Talk with Sadiq - Mindset & Habit Transformation App
 class DashboardScreenSimple extends ConsumerStatefulWidget {
@@ -13,12 +16,16 @@ class DashboardScreenSimple extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
-  int _currentQuoteIndex = 0;
+  late PageController _carouselController;
+  int _currentCarouselIndex = 0;
+  Timer? _carouselTimer;
   Timer? _quoteTimer;
   Timer? _countdownTimer;
   int _remainingSeconds = 0;
   bool _isTimerRunning = false;
   String _timerType = '';
+  bool _isCarouselAutoScrolling = true;
+  int _currentQuoteIndex = 0;
 
   // Consistent Blue Color Theme
   static const Color primaryBlue = Color(0xFF2196F3);
@@ -36,33 +43,40 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
     {'quote': 'Don\'t watch the clock; do what it does. Keep going.', 'author': 'Sam Levenson'},
   ];
 
-  // Real YouTube motivational videos
+  // Real YouTube motivational videos from your links
   final List<Map<String, String>> _videos = [
     {
-      'title': 'MINDSET - Best Motivational Video',
-      'duration': '12:04',
-      'url': 'https://www.youtube.com/watch?v=g-jwWYX7Jlo',
+      'title': 'Mindset Transformation',
+      'duration': '10:30',
+      'url': 'https://www.youtube.com/watch?v=kuxuGGVx_p8',
     },
     {
-      'title': 'THE POWER OF DISCIPLINE',
-      'duration': '15:30',
-      'url': 'https://www.youtube.com/watch?v=P3fIZuW9P_M',
+      'title': 'Power of Deep Work',
+      'duration': '15:20',
+      'url': 'https://www.youtube.com/watch?v=l6ZcFa8pybE',
     },
     {
-      'title': 'WHY DO WE FALL - Motivational Video',
-      'duration': '3:47',
-      'url': 'https://www.youtube.com/watch?v=mgmVOuLgFB0',
+      'title': 'Success Habits',
+      'duration': '12:45',
+      'url': 'https://www.youtube.com/watch?v=ZXGWYe01Ya8',
     },
     {
-      'title': 'CHANGE YOUR MIND - Motivational Speech',
-      'duration': '10:26',
-      'url': 'https://www.youtube.com/watch?v=nPAVhCy7Xzs',
+      'title': 'Motivation & Focus',
+      'duration': '8:15',
+      'url': 'https://www.youtube.com/watch?v=TLKxdTmk-zc',
+    },
+    {
+      'title': 'Change Your Life',
+      'duration': '14:00',
+      'url': 'https://www.youtube.com/watch?v=d9gwmyPMByM',
     },
   ];
 
   @override
   void initState() {
     super.initState();
+    _carouselController = PageController(initialPage: 0);
+    
     // Auto-change quote every 10 seconds
     _quoteTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       if (mounted) {
@@ -71,12 +85,26 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
         });
       }
     });
+
+    // Auto-change carousel every 5 seconds
+    _carouselTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (_isCarouselAutoScrolling && _carouselController.hasClients) {
+        final nextPage = (_currentCarouselIndex + 1) % _videos.length;
+        _carouselController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
     _quoteTimer?.cancel();
+    _carouselTimer?.cancel();
     _countdownTimer?.cancel();
+    _carouselController.dispose();
     super.dispose();
   }
 
@@ -101,6 +129,30 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
         _showTimerComplete();
       }
     });
+  }
+
+  void _pauseTimer() {
+    _countdownTimer?.cancel();
+    // Timer paused but not stopped - user can resume
+  }
+
+  void _resumeTimer() {
+    if (_remainingSeconds > 0) {
+      _countdownTimer?.cancel();
+      _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (_remainingSeconds > 0) {
+          setState(() {
+            _remainingSeconds--;
+          });
+        } else {
+          timer.cancel();
+          setState(() {
+            _isTimerRunning = false;
+          });
+          _showTimerComplete();
+        }
+      });
+    }
   }
 
   void _stopTimer() {
@@ -149,6 +201,10 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final authState = ref.watch(authNotifierProvider);
+    final now = DateTime.now();
+    final greeting = _getTimeBasedGreeting();
+    final dateString = DateFormat('EEEE, MMMM d').format(now);
     
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -191,33 +247,48 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
               children: [
                 const SizedBox(height: 16),
                 
-                // Hero Card
-                _buildHeroCard(theme),
+                // A. HEADER with greeting, date, profile
+                _buildHeaderSection(theme, authState, greeting, dateString),
                 const SizedBox(height: 24),
-                
-                // Auto-changing Quote
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _buildQuoteCard(theme),
-                ),
+
+                // B. DAILY PROGRESS OVERVIEW
+                _buildDailyProgressSection(theme),
                 const SizedBox(height: 24),
-                
-                // Functional Timer
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _buildTimerSection(theme),
-                ),
+
+                // C. FEATURED QUOTE / VIDEO CAROUSEL
+                _buildCarouselSection(theme),
                 const SizedBox(height: 24),
-                
-                // Real YouTube Videos
-                _buildVideosSection(theme),
+
+                // D. FOCUS TIMER
+                _buildTimerSection(theme),
                 const SizedBox(height: 24),
-                
-                // About Section
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _buildAboutSection(theme),
-                ),
+
+                // E. TODAY'S HABITS
+                _buildHabitsSection(theme),
+                const SizedBox(height: 24),
+
+                // F. DAILY MISSION
+                _buildMissionSection(theme),
+                const SizedBox(height: 24),
+
+                // G. COMMUNITY PREVIEW
+                _buildCommunityPreviewSection(theme),
+                const SizedBox(height: 24),
+
+                // H. LEARNING / VIDEOS
+                _buildLearningVideosSection(theme),
+                const SizedBox(height: 24),
+
+                // I. STATISTICS
+                _buildStatisticsSection(theme),
+                const SizedBox(height: 24),
+
+                // J. QUICK ACTIONS
+                _buildQuickActionsSection(theme),
+                const SizedBox(height: 24),
+
+                // K. BOTTOM MOTIVATION
+                _buildMotivationSection(theme),
                 const SizedBox(height: 32),
               ],
             ),
@@ -227,84 +298,134 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
     );
   }
 
-  Widget _buildHeroCard(ThemeData theme) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [primaryBlue, darkBlue],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: primaryBlue.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  String _getTimeBasedGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return '🌅 Good Morning';
+    if (hour < 18) return '☀️ Good Afternoon';
+    return '🌙 Good Evening';
+  }
+
+  // A. HEADER SECTION
+  Widget _buildHeaderSection(ThemeData theme, AsyncValue<User?> authState, String greeting, String dateString) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
         children: [
-          const Icon(Icons.psychology_rounded, color: Colors.white, size: 48),
-          const SizedBox(height: 16),
-          const Text(
-            'Transform Your Mindset',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                greeting,
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                dateString,
+                style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Changing millions of young minds and habits for a better future',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 16,
+          const Spacer(),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [primaryBlue, darkBlue],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryBlue.withOpacity(0.3),
+                  blurRadius: 8,
+                )
+              ],
             ),
+            child: const Icon(Icons.account_circle_rounded, color: Colors.white, size: 32),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildQuoteCard(ThemeData theme) {
-    final quote = _motivationalQuotes[_currentQuoteIndex];
-    
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 500),
+  // B. DAILY PROGRESS SECTION
+  Widget _buildDailyProgressSection(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
-        key: ValueKey(_currentQuoteIndex),
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: lightBlue.withOpacity(0.1),
+          color: theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: primaryBlue.withOpacity(0.3)),
+          border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.format_quote_rounded, color: primaryBlue, size: 32),
-            const SizedBox(height: 12),
-            Text(
-              quote['quote']!,
-              style: const TextStyle(
-                fontSize: 16,
-                fontStyle: FontStyle.italic,
-                height: 1.5,
-              ),
-              textAlign: TextAlign.center,
+            const Text(
+              'Today\'s Progress',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 12),
-            Text(
-              '— ${quote['author']}',
-              style: const TextStyle(
-                color: primaryBlue,
-                fontWeight: FontWeight.w600,
-              ),
+            const SizedBox(height: 16),
+            
+            // Progress bar
+            Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Daily Completion',
+                      style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                    const Text('65%', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: 0.65,
+                    minHeight: 8,
+                    backgroundColor: primaryBlue.withOpacity(0.2),
+                    valueColor: const AlwaysStoppedAnimation(primaryBlue),
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Stats grid
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    icon: Icons.timer_rounded,
+                    label: 'Focus Time',
+                    value: '2h 15m',
+                    theme: theme,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    icon: Icons.task_alt_rounded,
+                    label: 'Habits',
+                    value: '4/6',
+                    theme: theme,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    icon: Icons.whatshot_rounded,
+                    label: 'Streak',
+                    value: '7 days',
+                    theme: theme,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -312,232 +433,476 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
     );
   }
 
-  Widget _buildTimerSection(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Deep Work Timer',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Pomodoro Technique for focused productivity',
-          style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-        ),
-        const SizedBox(height: 16),
-        
-        if (_isTimerRunning) ...[
-          // Active Timer Display
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [primaryBlue, darkBlue]),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  _timerType,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  _formatTime(_remainingSeconds),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _stopTimer,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: primaryBlue,
-                    minimumSize: const Size(double.infinity, 48),
-                  ),
-                  child: const Text('Stop Timer'),
-                ),
-              ],
-            ),
-          ),
-        ] else ...[
-          // Timer Options
-          Row(
-            children: [
-              Expanded(
-                child: _buildTimerCard(
-                  theme,
-                  'Deep Work',
-                  '25 min',
-                  Icons.psychology_rounded,
-                  () => _startTimer(25, 'Deep Work'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildTimerCard(
-                  theme,
-                  'Extended',
-                  '50 min',
-                  Icons.rocket_launch_rounded,
-                  () => _startTimer(50, 'Extended Focus'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildTimerCard(ThemeData theme, String title, String time, IconData icon, VoidCallback onStart) {
+  Widget _buildStatCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required ThemeData theme,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
+        color: lightBlue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: primaryBlue.withOpacity(0.2)),
       ),
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: lightBlue.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: primaryBlue, size: 32),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-            textAlign: TextAlign.center,
-          ),
+          Icon(icon, color: primaryBlue, size: 24),
           const SizedBox(height: 8),
           Text(
-            time,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: primaryBlue,
-            ),
+            value,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
-          const SizedBox(height: 12),
-          ElevatedButton.icon(
-            onPressed: onStart,
-            icon: const Icon(Icons.play_arrow_rounded, size: 18),
-            label: const Text('Start'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryBlue,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 36),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildVideosSection(ThemeData theme) {
+  // C. FEATURED CAROUSEL SECTION
+  Widget _buildCarouselSection(ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            'Motivational Videos',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            'Featured Content',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 180,
+          height: 200,
+          child: PageView.builder(
+            controller: _carouselController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentCarouselIndex = index;
+              });
+            },
+            itemCount: _videos.length,
+            itemBuilder: (context, index) {
+              final video = _videos[index];
+              final videoId = video['url']!.split('v=').last.split('&').first;
+              final thumbnailUrl = 'https://img.youtube.com/vi/$videoId/maxresdefault.jpg';
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() => _isCarouselAutoScrolling = false);
+                  _openVideo(video['url']!).then((_) {
+                    setState(() => _isCarouselAutoScrolling = true);
+                  });
+                },
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Stack(
+                      children: [
+                        Image.network(
+                          thumbnailUrl,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: primaryBlue,
+                              child: const Center(
+                                child: Icon(
+                                  Icons.video_library_rounded,
+                                  color: Colors.white,
+                                  size: 48,
+                                ),
+                              ),
+                            );
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: primaryBlue,
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation(Colors.white),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const Center(
+                          child: Icon(
+                            Icons.play_circle_filled_rounded,
+                            color: Colors.white,
+                            size: 64,
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withValues(alpha: 0.8),
+                                ],
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  video['title']!,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  video['duration']!,
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Page indicators
+        Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              _videos.length,
+              (index) => Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: index == _currentCarouselIndex
+                      ? primaryBlue
+                      : primaryBlue.withOpacity(0.3),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // D. FOCUS TIMER SECTION
+  Widget _buildTimerSection(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Deep Work Timer', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text('Pomodoro Technique for focused productivity', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+          const SizedBox(height: 16),
+          if (_isTimerRunning) ...[
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(gradient: const LinearGradient(colors: [primaryBlue, darkBlue]), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: primaryBlue.withOpacity(0.3), blurRadius: 12)]),
+              child: Column(
+                children: [
+                  Text(_timerType, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 16),
+                  Text(_formatTime(_remainingSeconds), style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          if (_countdownTimer?.isActive ?? false) {
+                            _pauseTimer();
+                            setState(() => _isTimerRunning = false);
+                          } else {
+                            _resumeTimer();
+                            setState(() => _isTimerRunning = true);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: primaryBlue),
+                        icon: Icon((_countdownTimer?.isActive ?? false) ? Icons.pause_rounded : Icons.play_arrow_rounded),
+                        label: Text((_countdownTimer?.isActive ?? false) ? 'Pause' : 'Resume'),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: _stopTimer,
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                        icon: const Icon(Icons.stop_rounded),
+                        label: const Text('End'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(16), border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5))),
+                    child: Column(
+                      children: [
+                        Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: lightBlue.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.psychology_rounded, color: primaryBlue, size: 32)),
+                        const SizedBox(height: 12),
+                        const Text('Deep Work', style: TextStyle(fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+                        const SizedBox(height: 8),
+                        const Text('25 min', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: primaryBlue)),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(onPressed: () => _startTimer(25, 'Deep Work'), icon: const Icon(Icons.play_arrow_rounded, size: 18), label: const Text('Start'), style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 36))),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(16), border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5))),
+                    child: Column(
+                      children: [
+                        Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: lightBlue.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.rocket_launch_rounded, color: primaryBlue, size: 32)),
+                        const SizedBox(height: 12),
+                        const Text('Extended', style: TextStyle(fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+                        const SizedBox(height: 8),
+                        const Text('50 min', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: primaryBlue)),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(onPressed: () => _startTimer(50, 'Extended Focus'), icon: const Icon(Icons.play_arrow_rounded, size: 18), label: const Text('Start'), style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 36))),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // E. TODAY'S HABITS SECTION
+  Widget _buildHabitsSection(ThemeData theme) {
+    final habits = [
+      {'name': 'Morning Routine', 'done': true},
+      {'name': 'Meditation', 'done': true},
+      {'name': 'Reading', 'done': false},
+      {'name': 'Exercise', 'done': true},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Text('Today\'s Habits', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: habits.length,
+            itemBuilder: (context, index) {
+              final habit = habits[index] as Map<String, dynamic>;
+              return Container(
+                width: 140,
+                margin: EdgeInsets.only(right: index < habits.length - 1 ? 12 : 0),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: habit['done'] ? primaryBlue.withOpacity(0.1) : theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: habit['done'] ? primaryBlue : theme.colorScheme.outlineVariant.withOpacity(0.5)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(habit['done'] ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                          color: habit['done'] ? primaryBlue : theme.colorScheme.outlineVariant, size: 20),
+                        const Spacer(),
+                        Text(habit['done'] ? '✓' : '→', style: TextStyle(color: habit['done'] ? primaryBlue : theme.colorScheme.outlineVariant, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(habit['name'] as String, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 8),
+                    Text('+ 50 XP', style: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // F. DAILY MISSION SECTION
+  Widget _buildMissionSection(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [primaryBlue.withOpacity(0.1), lightBlue.withOpacity(0.1)]),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: primaryBlue.withOpacity(0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: primaryBlue.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                  child: const Icon(Icons.star_rounded, color: primaryBlue, size: 24)),
+                const SizedBox(width: 12),
+                const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Today\'s Mission', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text('Complete one deep work session', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                ])),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Text('Progress', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+              const Text('75%', style: TextStyle(fontWeight: FontWeight.bold)),
+            ]),
+            const SizedBox(height: 8),
+            ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearProgressIndicator(value: 0.75, minHeight: 6, backgroundColor: primaryBlue.withOpacity(0.1), valueColor: const AlwaysStoppedAnimation(primaryBlue))),
+            const SizedBox(height: 12),
+            SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () {}, style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, foregroundColor: Colors.white), child: const Text('Continue Mission'))),
+            const SizedBox(height: 8),
+            Text('Reward: +200 XP', style: TextStyle(color: primaryBlue, fontWeight: FontWeight.w600, fontSize: 12)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // G. COMMUNITY PREVIEW SECTION
+  Widget _buildCommunityPreviewSection(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            const Text('Community', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            TextButton(onPressed: () {}, child: const Text('See All')),
+          ]),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(16), border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5))),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(width: 40, height: 40, decoration: BoxDecoration(gradient: const LinearGradient(colors: [primaryBlue, darkBlue]), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.person_rounded, color: Colors.white, size: 20)),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const Text('Sadiq Ahmed', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('Just completed a 50-minute focus session!', style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ])),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Row(children: [
+                  Icon(Icons.favorite_rounded, color: Colors.red, size: 18),
+                  SizedBox(width: 4),
+                  Text('45', style: TextStyle(fontSize: 12)),
+                  SizedBox(width: 16),
+                  Icon(Icons.message_rounded, color: primaryBlue, size: 18),
+                  SizedBox(width: 4),
+                  Text('12', style: TextStyle(fontSize: 12)),
+                ]),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(width: double.infinity, child: ElevatedButton.icon(onPressed: () {}, icon: const Icon(Icons.forum_rounded), label: const Text('Open Community Chat'), style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, foregroundColor: Colors.white))),
+        ],
+      ),
+    );
+  }
+
+  // H. LEARNING / VIDEOS SECTION
+  Widget _buildLearningVideosSection(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('Learning Resources', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 140,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: _videos.length,
             itemBuilder: (context, index) {
               final video = _videos[index];
+              final videoId = video['url']!.split('v=').last.split('&').first;
+              final thumbnailUrl = 'https://img.youtube.com/vi/$videoId/maxresdefault.jpg';
               return GestureDetector(
                 onTap: () => _openVideo(video['url']!),
                 child: Container(
-                  width: 280,
+                  width: 180,
                   margin: EdgeInsets.only(right: index < _videos.length - 1 ? 12 : 0),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [primaryBlue, darkBlue],
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8)]),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Stack(
+                      children: [
+                        Image.network(thumbnailUrl, width: double.infinity, height: double.infinity, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => Container(color: primaryBlue, child: const Center(child: Icon(Icons.video_library_rounded, color: Colors.white, size: 32)))),
+                        const Center(child: Icon(Icons.play_circle_filled_rounded, color: Colors.white, size: 48)),
+                        Positioned(top: 8, right: 8, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3), decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(6)), child: Text(video['duration']!, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)))),
+                      ],
                     ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        top: 12,
-                        right: 12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.6),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            video['duration']!,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const Center(
-                        child: Icon(
-                          Icons.play_circle_filled_rounded,
-                          color: Colors.white,
-                          size: 64,
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withOpacity(0.8),
-                              ],
-                            ),
-                            borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(16),
-                              bottomRight: Radius.circular(16),
-                            ),
-                          ),
-                          child: Text(
-                            video['title']!,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               );
@@ -548,46 +913,125 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
     );
   }
 
-  Widget _buildAboutSection(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
+  // I. STATISTICS SECTION
+  Widget _buildStatisticsSection(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(16), border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5))),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Weekly Statistics', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Row(children: [
+              Expanded(child: _buildStatBox(icon: Icons.timer_rounded, label: 'Focus Time', value: '12.5h', theme: theme)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildStatBox(icon: Icons.task_alt_rounded, label: 'Habits Done', value: '24/28', theme: theme)),
+            ]),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(child: _buildStatBox(icon: Icons.whatshot_rounded, label: 'Current Streak', value: '7 days', theme: theme)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildStatBox(icon: Icons.star_rounded, label: 'XP Earned', value: '+850', theme: theme)),
+            ]),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildStatBox({required IconData icon, required String label, required String value, required ThemeData theme}) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: primaryBlue.withOpacity(0.05), borderRadius: BorderRadius.circular(12), border: Border.all(color: primaryBlue.withOpacity(0.2))),
+      child: Column(
+        children: [
+          Icon(icon, color: primaryBlue, size: 28),
+          const SizedBox(height: 8),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 4),
+          Text(label, style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant), textAlign: TextAlign.center),
+        ],
+      ),
+    );
+  }
+
+  // J. QUICK ACTIONS SECTION
+  Widget _buildQuickActionsSection(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'About Talk with Sadiq',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+          const Text('Quick Actions', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          Text(
-            'An app dedicated to transforming the mindset and habits of young people for a better future. Through deep work techniques, motivational content, and habit tracking, we help you become the best version of yourself.',
-            style: TextStyle(
-              fontSize: 16,
-              height: 1.6,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Row(
+          GridView.count(
+            crossAxisCount: 3,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
             children: [
-              Icon(Icons.favorite_rounded, color: primaryBlue, size: 20),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Changing millions of lives, one habit at a time',
-                  style: TextStyle(
-                    color: primaryBlue,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+              _buildActionButton(icon: Icons.play_arrow_rounded, label: 'Focus', color: primaryBlue, onTap: () => _startTimer(25, 'Deep Work')),
+              _buildActionButton(icon: Icons.task_alt_rounded, label: 'Habits', color: const Color(0xFF4CAF50), onTap: () {}),
+              _buildActionButton(icon: Icons.forum_rounded, label: 'Community', color: const Color(0xFFFFC107), onTap: () {}),
+              _buildActionButton(icon: Icons.video_library_rounded, label: 'Learning', color: const Color(0xFF9C27B0), onTap: () {}),
+              _buildActionButton(icon: Icons.trending_up_rounded, label: 'Progress', color: const Color(0xFFE91E63), onTap: () {}),
+              _buildActionButton(icon: Icons.account_circle_rounded, label: 'Profile', color: const Color(0xFF00BCD4), onTap: () {}),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.3))),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(icon, color: color, size: 32),
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12), textAlign: TextAlign.center),
+        ]),
+      ),
+    );
+  }
+
+  // K. MOTIVATION SECTION
+  Widget _buildMotivationSection(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [primaryBlue.withOpacity(0.15), darkBlue.withOpacity(0.15)]),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: primaryBlue.withOpacity(0.2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.format_quote_rounded, color: primaryBlue, size: 28),
+            const SizedBox(height: 12),
+            Text(_motivationalQuotes[_currentQuoteIndex]['quote']!, style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic, height: 1.5)),
+            const SizedBox(height: 12),
+            Text('— ${_motivationalQuotes[_currentQuoteIndex]['author']}', style: const TextStyle(color: primaryBlue, fontWeight: FontWeight.w600, fontSize: 13)),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: primaryBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              child: Row(children: const [
+                Icon(Icons.star_rounded, color: primaryBlue),
+                SizedBox(width: 8),
+                Expanded(child: Text('Keep going! You\'re making progress every day.', style: TextStyle(color: primaryBlue, fontWeight: FontWeight.w600))),
+              ]),
+            ),
+          ],
+        ),
       ),
     );
   }

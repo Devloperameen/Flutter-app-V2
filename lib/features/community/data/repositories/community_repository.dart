@@ -176,6 +176,30 @@ class CommunityRepository {
     }
   }
 
+  /// Add a comment to a post
+  Future<void> addComment({
+    required String postId,
+    required String userId,
+    required String userName,
+    required String comment,
+  }) async {
+    try {
+      log.i('💬 Adding comment to post: $postId');
+      await _firestoreDataSource.addComment(
+        postId: postId,
+        userId: userId,
+        userName: userName,
+        comment: comment,
+      );
+    } catch (e, stackTrace) {
+      log.e('❌ Failed to add comment: $e', stackTrace: stackTrace);
+      throw ServerFailure(
+        message: 'Failed to add comment',
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
   /// Reply to a message (Real Firestore only)
   Future<String> replyToMessage({
     required String messageId,
