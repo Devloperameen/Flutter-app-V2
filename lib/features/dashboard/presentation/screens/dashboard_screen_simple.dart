@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:safe/core/design/design.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-/// Talk with Sadiq App - Dashboard
-/// Transforming young minds through mindset and habit change
+/// Talk with Sadiq - Mindset & Habit Transformation App
 class DashboardScreenSimple extends ConsumerStatefulWidget {
   const DashboardScreenSimple({super.key});
 
@@ -15,38 +15,55 @@ class DashboardScreenSimple extends ConsumerStatefulWidget {
 class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
   int _currentQuoteIndex = 0;
   Timer? _quoteTimer;
+  Timer? _countdownTimer;
+  int _remainingSeconds = 0;
+  bool _isTimerRunning = false;
+  String _timerType = '';
+
+  // Consistent Blue Color Theme
+  static const Color primaryBlue = Color(0xFF2196F3);
+  static const Color darkBlue = Color(0xFF1976D2);
+  static const Color lightBlue = Color(0xFF64B5F6);
 
   final List<Map<String, String>> _motivationalQuotes = [
+    {'quote': 'The only way to do great work is to love what you do.', 'author': 'Steve Jobs'},
+    {'quote': 'Success is not final, failure is not fatal: it is the courage to continue that counts.', 'author': 'Winston Churchill'},
+    {'quote': 'Your time is limited, don\'t waste it living someone else\'s life.', 'author': 'Steve Jobs'},
+    {'quote': 'The future belongs to those who believe in the beauty of their dreams.', 'author': 'Eleanor Roosevelt'},
+    {'quote': 'Believe you can and you\'re halfway there.', 'author': 'Theodore Roosevelt'},
+    {'quote': 'It does not matter how slowly you go as long as you do not stop.', 'author': 'Confucius'},
+    {'quote': 'The only impossible journey is the one you never begin.', 'author': 'Tony Robbins'},
+    {'quote': 'Don\'t watch the clock; do what it does. Keep going.', 'author': 'Sam Levenson'},
+  ];
+
+  // Real YouTube motivational videos
+  final List<Map<String, String>> _videos = [
     {
-      'quote': 'The only way to do great work is to love what you do.',
-      'author': 'Steve Jobs'
+      'title': 'MINDSET - Best Motivational Video',
+      'duration': '12:04',
+      'url': 'https://www.youtube.com/watch?v=g-jwWYX7Jlo',
     },
     {
-      'quote': 'Success is not final, failure is not fatal: it is the courage to continue that counts.',
-      'author': 'Winston Churchill'
+      'title': 'THE POWER OF DISCIPLINE',
+      'duration': '15:30',
+      'url': 'https://www.youtube.com/watch?v=P3fIZuW9P_M',
     },
     {
-      'quote': 'Your time is limited, don\'t waste it living someone else\'s life.',
-      'author': 'Steve Jobs'
+      'title': 'WHY DO WE FALL - Motivational Video',
+      'duration': '3:47',
+      'url': 'https://www.youtube.com/watch?v=mgmVOuLgFB0',
     },
     {
-      'quote': 'The future belongs to those who believe in the beauty of their dreams.',
-      'author': 'Eleanor Roosevelt'
-    },
-    {
-      'quote': 'Believe you can and you\'re halfway there.',
-      'author': 'Theodore Roosevelt'
-    },
-    {
-      'quote': 'It does not matter how slowly you go as long as you do not stop.',
-      'author': 'Confucius'
+      'title': 'CHANGE YOUR MIND - Motivational Speech',
+      'duration': '10:26',
+      'url': 'https://www.youtube.com/watch?v=nPAVhCy7Xzs',
     },
   ];
 
   @override
   void initState() {
     super.initState();
-    // Change quote every 10 seconds
+    // Auto-change quote every 10 seconds
     _quoteTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       if (mounted) {
         setState(() {
@@ -59,7 +76,74 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
   @override
   void dispose() {
     _quoteTimer?.cancel();
+    _countdownTimer?.cancel();
     super.dispose();
+  }
+
+  void _startTimer(int minutes, String type) {
+    setState(() {
+      _remainingSeconds = minutes * 60;
+      _isTimerRunning = true;
+      _timerType = type;
+    });
+
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_remainingSeconds > 0) {
+        setState(() {
+          _remainingSeconds--;
+        });
+      } else {
+        timer.cancel();
+        setState(() {
+          _isTimerRunning = false;
+        });
+        _showTimerComplete();
+      }
+    });
+  }
+
+  void _stopTimer() {
+    _countdownTimer?.cancel();
+    setState(() {
+      _isTimerRunning = false;
+      _remainingSeconds = 0;
+    });
+  }
+
+  void _showTimerComplete() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('🎉 Great Work!'),
+        content: Text('You completed your $_timerType session!'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTime(int seconds) {
+    final mins = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _openVideo(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open video')),
+        );
+      }
+    }
   }
 
   @override
@@ -82,19 +166,17 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFFF006E), Color(0xFF8338EC)],
+                      colors: [primaryBlue, darkBlue],
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.psychology_rounded, color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: 12),
-                Expanded(
+                const Expanded(
                   child: Text(
                     'Talk with Sadiq',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -107,40 +189,36 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: 16),
                 
-                // Hero Section
+                // Hero Card
                 _buildHeroCard(theme),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 24),
                 
-                // Motivational Quote (Changes every 10 seconds)
+                // Auto-changing Quote
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontal),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _buildQuoteCard(theme),
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 24),
                 
-                // Deep Work Timer
+                // Functional Timer
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontal),
-                  child: _buildDeepWorkSection(theme),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildTimerSection(theme),
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 24),
                 
-                // AI Motivation Videos (Horizontal Scroll)
+                // Real YouTube Videos
                 _buildVideosSection(theme),
-                const SizedBox(height: AppSpacing.lg),
-                
-                // Book Reviews (Horizontal Scroll)
-                _buildBooksSection(theme),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 24),
                 
                 // About Section
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontal),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _buildAboutSection(theme),
                 ),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -151,18 +229,18 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
 
   Widget _buildHeroCard(ThemeData theme) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontal),
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFFF006E), Color(0xFF8338EC), Color(0xFF3A86FF)],
+          colors: [primaryBlue, darkBlue],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF8338EC).withValues(alpha: 0.3),
+            color: primaryBlue.withOpacity(0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -171,24 +249,22 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.psychology_rounded,
-            color: Colors.white,
-            size: 48,
-          ),
+          const Icon(Icons.psychology_rounded, color: Colors.white, size: 48),
           const SizedBox(height: 16),
-          Text(
+          const Text(
             'Transform Your Mindset',
-            style: theme.textTheme.headlineSmall?.copyWith(
+            style: TextStyle(
               color: Colors.white,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Changing millions of young minds and habits for a better future',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: Colors.white.withValues(alpha: 0.9),
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 16,
             ),
           ),
         ],
@@ -197,7 +273,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
   }
 
   Widget _buildQuoteCard(ThemeData theme) {
-    final currentQuote = _motivationalQuotes[_currentQuoteIndex];
+    final quote = _motivationalQuotes[_currentQuoteIndex];
     
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 500),
@@ -205,23 +281,18 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
         key: ValueKey(_currentQuoteIndex),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+          color: lightBlue.withOpacity(0.1),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: theme.colorScheme.primary.withValues(alpha: 0.3),
-          ),
+          border: Border.all(color: primaryBlue.withOpacity(0.3)),
         ),
         child: Column(
           children: [
-            Icon(
-              Icons.format_quote_rounded,
-              color: theme.colorScheme.primary,
-              size: 32,
-            ),
+            const Icon(Icons.format_quote_rounded, color: primaryBlue, size: 32),
             const SizedBox(height: 12),
             Text(
-              currentQuote['quote']!,
-              style: theme.textTheme.titleMedium?.copyWith(
+              quote['quote']!,
+              style: const TextStyle(
+                fontSize: 16,
                 fontStyle: FontStyle.italic,
                 height: 1.5,
               ),
@@ -229,9 +300,9 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
             ),
             const SizedBox(height: 12),
             Text(
-              '— ${currentQuote['author']}',
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: theme.colorScheme.primary,
+              '— ${quote['author']}',
+              style: const TextStyle(
+                color: primaryBlue,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -241,110 +312,132 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
     );
   }
 
-  Widget _buildDeepWorkSection(ThemeData theme) {
+  Widget _buildTimerSection(ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Deep Work Timer',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         Text(
           'Pomodoro Technique for focused productivity',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildTimerCard(
-                theme,
-                'Deep Work Focus',
-                '25:00',
-                '+50 XP',
-                Icons.psychology_rounded,
-                const Color(0xFFFF006E),
-              ),
+        
+        if (_isTimerRunning) ...[
+          // Active Timer Display
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [primaryBlue, darkBlue]),
+              borderRadius: BorderRadius.circular(16),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildTimerCard(
-                theme,
-                'Start Mission',
-                '50:00',
-                '+100 XP',
-                Icons.rocket_launch_rounded,
-                const Color(0xFF8338EC),
-              ),
+            child: Column(
+              children: [
+                Text(
+                  _timerType,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _formatTime(_remainingSeconds),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _stopTimer,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: primaryBlue,
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                  child: const Text('Stop Timer'),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ] else ...[
+          // Timer Options
+          Row(
+            children: [
+              Expanded(
+                child: _buildTimerCard(
+                  theme,
+                  'Deep Work',
+                  '25 min',
+                  Icons.psychology_rounded,
+                  () => _startTimer(25, 'Deep Work'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildTimerCard(
+                  theme,
+                  'Extended',
+                  '50 min',
+                  Icons.rocket_launch_rounded,
+                  () => _startTimer(50, 'Extended Focus'),
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
 
-  Widget _buildTimerCard(
-    ThemeData theme,
-    String title,
-    String time,
-    String xp,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildTimerCard(ThemeData theme, String title, String time, IconData icon, VoidCallback onStart) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: lightBlue.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 32),
+            child: Icon(icon, color: primaryBlue, size: 32),
           ),
           const SizedBox(height: 12),
           Text(
             title,
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w600),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             time,
-            style: theme.textTheme.headlineMedium?.copyWith(
+            style: const TextStyle(
+              fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            xp,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: primaryBlue,
             ),
           ),
           const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: () {},
+          ElevatedButton.icon(
+            onPressed: onStart,
             icon: const Icon(Icons.play_arrow_rounded, size: 18),
             label: const Text('Start'),
-            style: FilledButton.styleFrom(
-              backgroundColor: color,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryBlue,
+              foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 36),
             ),
           ),
@@ -354,48 +447,14 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
   }
 
   Widget _buildVideosSection(ThemeData theme) {
-    final videos = [
-      {
-        'title': '20 Minutes to Change Your Life',
-        'duration': '20:00',
-        'thumbnail': Icons.play_circle_filled_rounded,
-      },
-      {
-        'title': 'Morning Motivation',
-        'duration': '15:30',
-        'thumbnail': Icons.wb_sunny_rounded,
-      },
-      {
-        'title': 'Success Mindset',
-        'duration': '18:45',
-        'thumbnail': Icons.trending_up_rounded,
-      },
-      {
-        'title': 'Overcome Procrastination',
-        'duration': '12:20',
-        'thumbnail': Icons.timer_rounded,
-      },
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontal),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'AI Motivation Videos',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: const Text('See All'),
-              ),
-            ],
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Motivational Videos',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
         ),
         const SizedBox(height: 12),
@@ -403,219 +462,83 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
           height: 180,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontal),
-            itemCount: videos.length,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _videos.length,
             itemBuilder: (context, index) {
-              final video = videos[index];
-              return Container(
-                width: 280,
-                margin: EdgeInsets.only(right: index < videos.length - 1 ? 12 : 0),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFFFF006E).withValues(alpha: 0.8),
-                      const Color(0xFF8338EC).withValues(alpha: 0.8),
+              final video = _videos[index];
+              return GestureDetector(
+                onTap: () => _openVideo(video['url']!),
+                child: Container(
+                  width: 280,
+                  margin: EdgeInsets.only(right: index < _videos.length - 1 ? 12 : 0),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [primaryBlue, darkBlue],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            video['duration']!,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Center(
+                        child: Icon(
+                          Icons.play_circle_filled_rounded,
+                          color: Colors.white,
+                          size: 64,
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.8),
+                              ],
+                            ),
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(16),
+                              bottomRight: Radius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            video['title']!,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: 12,
-                      right: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          video['duration']!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Center(
-                      child: Icon(
-                        video['thumbnail'] as IconData,
-                        color: Colors.white,
-                        size: 64,
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withValues(alpha: 0.8),
-                            ],
-                          ),
-                          borderRadius: const BorderRadius.only(
-                            bottomLeft: Radius.circular(16),
-                            bottomRight: Radius.circular(16),
-                          ),
-                        ),
-                        child: Text(
-                          video['title']!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBooksSection(ThemeData theme) {
-    final books = [
-      {
-        'title': 'Atomic Habits',
-        'author': 'James Clear',
-        'rating': '4.8',
-      },
-      {
-        'title': 'Deep Work',
-        'author': 'Cal Newport',
-        'rating': '4.6',
-      },
-      {
-        'title': 'The Power of Now',
-        'author': 'Eckhart Tolle',
-        'rating': '4.7',
-      },
-      {
-        'title': 'Can\'t Hurt Me',
-        'author': 'David Goggins',
-        'rating': '4.9',
-      },
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontal),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Book Reviews',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: const Text('See All'),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 200,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontal),
-            itemCount: books.length,
-            itemBuilder: (context, index) {
-              final book = books[index];
-              return Container(
-                width: 160,
-                margin: EdgeInsets.only(right: index < books.length - 1 ? 12 : 0),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          topRight: Radius.circular(16),
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.menu_book_rounded,
-                          size: 48,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            book['title']!,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'By ${book['author']}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.star_rounded,
-                                color: Colors.amber,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                book['rating']!,
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
               );
             },
@@ -635,34 +558,31 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'About Talk with Sadiq',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Text(
             'An app dedicated to transforming the mindset and habits of young people for a better future. Through deep work techniques, motivational content, and habit tracking, we help you become the best version of yourself.',
-            style: theme.textTheme.bodyLarge?.copyWith(
+            style: TextStyle(
+              fontSize: 16,
               height: 1.6,
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 16),
-          Row(
+          const Row(
             children: [
-              Icon(
-                Icons.favorite_rounded,
-                color: theme.colorScheme.primary,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Changing millions of lives, one habit at a time',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
+              Icon(Icons.favorite_rounded, color: primaryBlue, size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Changing millions of lives, one habit at a time',
+                  style: TextStyle(
+                    color: primaryBlue,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
