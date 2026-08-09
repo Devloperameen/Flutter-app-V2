@@ -11,7 +11,7 @@ import 'package:safe/features/habits/presentation/screens/habits_screen.dart';
 import 'package:safe/features/habits/presentation/screens/edit_habit_screen.dart';
 import 'package:safe/features/habits/presentation/screens/habit_calendar_screen.dart';
 import 'package:safe/features/habits/domain/models/habit.dart';
-import 'package:safe/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:safe/features/dashboard/presentation/screens/dashboard_screen_simple.dart';
 import 'package:safe/features/dashboard/presentation/screens/dashboard_shell.dart';
 import 'package:safe/features/onboarding/presentation/screens/splash_screen.dart';
 
@@ -70,7 +70,7 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: RoutePaths.dashboard,
           name: RouteNames.dashboard,
-          builder: (context, state) => const DashboardScreen(),
+          builder: (context, state) => const DashboardScreenSimple(),
         ),
         GoRoute(
           path: RoutePaths.habits,
