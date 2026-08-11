@@ -33,15 +33,21 @@ class AuthResponse {
   });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] as Map<String, dynamic>;
+    // Backend response structure:
+    // { success: true, data: { userId, email, fullName, accessToken, refreshToken }, message: "...", statusCode: 201 }
+    
+    final data = json['data'] as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Invalid auth response: missing data field');
+    }
     
     return AuthResponse(
-      userId: data['userId'] as String,
-      email: data['email'] as String,
-      fullName: data['fullName'] as String,
+      userId: (data['userId'] ?? data['id'] ?? '') as String,
+      email: (data['email'] ?? '') as String,
+      fullName: (data['fullName'] ?? data['name'] ?? '') as String,
       avatar: data['avatar'] as String?,
-      accessToken: data['accessToken'] as String,
-      refreshToken: data['refreshToken'] as String,
+      accessToken: (data['accessToken'] ?? data['token'] ?? '') as String,
+      refreshToken: (data['refreshToken'] ?? '') as String,
     );
   }
 }
@@ -82,8 +88,22 @@ class HttpAuthDatasource {
       log.i('✅ Registration successful: ${authResponse.email}');
       return authResponse;
     } on DioException catch (e) {
-      log.e('❌ Dio error registering: ${e.response?.data}');
-      rethrow;
+      // Extract meaningful error message from backend response
+      String errorMsg = 'Registration failed';
+      
+      if (e.response?.data != null) {
+        final data = e.response!.data;
+        if (data is Map) {
+          if (data['message'] != null) {
+            errorMsg = data['message'].toString();
+          } else if (data['errors'] != null && data['errors'] is List && (data['errors'] as List).isNotEmpty) {
+            errorMsg = (data['errors'] as List).first.toString();
+          }
+        }
+      }
+      
+      log.e('❌ Dio error registering: $errorMsg');
+      throw errorMsg;
     } catch (e) {
       log.e('❌ Error registering: $e');
       rethrow;
@@ -117,8 +137,22 @@ class HttpAuthDatasource {
       log.i('✅ Login successful: ${authResponse.email}');
       return authResponse;
     } on DioException catch (e) {
-      log.e('❌ Dio error logging in: ${e.response?.data}');
-      rethrow;
+      // Extract meaningful error message from backend response
+      String errorMsg = 'Login failed';
+      
+      if (e.response?.data != null) {
+        final data = e.response!.data;
+        if (data is Map) {
+          if (data['message'] != null) {
+            errorMsg = data['message'].toString();
+          } else if (data['errors'] != null && data['errors'] is List && (data['errors'] as List).isNotEmpty) {
+            errorMsg = (data['errors'] as List).first.toString();
+          }
+        }
+      }
+      
+      log.e('❌ Dio error logging in: $errorMsg');
+      throw errorMsg;
     } catch (e) {
       log.e('❌ Error logging in: $e');
       rethrow;
