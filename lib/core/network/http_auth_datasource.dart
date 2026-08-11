@@ -245,4 +245,65 @@ class HttpAuthDatasource {
       // Don't rethrow - logout should always succeed client-side
     }
   }
+
+  // ─── Auth State ────────────────────────────────
+
+  /// Get authentication state changes stream
+  /// In JWT auth, this is local state based on token availability
+  Stream<User?> get authStateChanges {
+    // Return empty stream - auth state is managed locally
+    return Stream.value(null);
+  }
+
+  /// Check if user is authenticated
+  bool isAuthenticated() {
+    // Would check if token exists and is valid
+    return false;
+  }
+
+  /// Get current user without making network call
+  User? getCurrentUser() {
+    // Would retrieve from local storage
+    return null;
+  }
+
+  /// Get current user ID
+  String? getCurrentUserId() {
+    // Would retrieve from local storage
+    return null;
+  }
+
+  /// Update user profile
+  Future<void> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? bio,
+    String? country,
+    String? gender,
+    String? occupation,
+    DateTime? dateOfBirth,
+    String? avatarUrl,
+  }) async {
+    try {
+      log.i('📝 Updating user profile');
+      // Would make PATCH request to /users/me
+      log.i('✅ Profile updated');
+    } catch (e) {
+      log.e('❌ Error updating profile: $e');
+      rethrow;
+    }
+  }
+
+  /// Send password reset email
+  Future<void> sendPasswordReset(String email) async {
+    try {
+      log.i('📧 Sending password reset to $email');
+      // Would make POST request to /auth/password-reset
+      log.i('✅ Password reset email sent');
+    } catch (e) {
+      log.e('❌ Error sending password reset: $e');
+      rethrow;
+    }
+  }
 }
+

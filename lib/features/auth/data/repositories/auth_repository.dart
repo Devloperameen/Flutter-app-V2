@@ -5,6 +5,7 @@ import 'package:safe/core/storage/secure_storage_service.dart';
 import 'package:safe/core/storage/storage_keys.dart';
 import 'package:safe/core/utils/app_logger.dart';
 import 'package:safe/core/network/http_auth_datasource.dart';
+import 'package:safe/core/network/api_client.dart';
 import 'package:safe/features/auth/domain/models/user.dart';
 import 'package:safe/core/providers/core_providers.dart';
 
@@ -12,7 +13,8 @@ part 'auth_repository.g.dart';
 
 @riverpod
 AuthRepository authRepository(AuthRepositoryRef ref) {
-  final httpDataSource = HttpAuthDataSource();
+  final apiClient = ref.watch(apiClientProvider);
+  final httpDataSource = HttpAuthDatasource(apiClient: apiClient);
   final secureStorage = ref.watch(secureStorageProvider);
   return AuthRepository(
     httpDataSource: httpDataSource,
@@ -26,18 +28,29 @@ class AuthRepository {
     required this.secureStorage,
   });
 
-  final HttpAuthDataSource httpDataSource;
+  final HttpAuthDatasource httpDataSource;
   final SecureStorageService secureStorage;
 
   /// Login user with HTTP Backend
   Future<User> login(String email, String password) async {
     try {
-      final response = await httpDataSource.login(
+      final authResponse = await httpDataSource.login(
         email: email,
         password: password,
       );
-      await _persistUser(response['user'] as User, response['token'] as String);
-      return response['user'] as User;
+      final user = User(
+        id: authResponse.userId,
+        email: authResponse.email,
+        firstName: authResponse.fullName.split(' ').first,
+        lastName: authResponse.fullName.split(' ').length > 1 
+          ? authResponse.fullName.split(' ').skip(1).join(' ')
+          : '',
+        avatarUrl: authResponse.avatar,
+        isEmailVerified: true,
+        createdAt: DateTime.now(),
+      );
+      await _persistUser(user, authResponse.accessToken);
+      return user;
     } catch (e, stackTrace) {
       log.e('❌ Login error: $e', error: e, stackTrace: stackTrace);
       throw ServerFailure(
@@ -55,14 +68,22 @@ class AuthRepository {
     String password,
   ) async {
     try {
-      final response = await httpDataSource.register(
+      final authResponse = await httpDataSource.register(
         email: email,
         password: password,
+        fullName: '$firstName $lastName',
+      );
+      final user = User(
+        id: authResponse.userId,
+        email: authResponse.email,
         firstName: firstName,
         lastName: lastName,
+        avatarUrl: authResponse.avatar,
+        isEmailVerified: true,
+        createdAt: DateTime.now(),
       );
-      await _persistUser(response['user'] as User, response['token'] as String);
-      return response['user'] as User;
+      await _persistUser(user, authResponse.accessToken);
+      return user;
     } catch (e, stackTrace) {
       log.e('❌ Register error: $e', error: e, stackTrace: stackTrace);
       throw ServerFailure(
@@ -164,7 +185,7 @@ class AuthRepository {
       log.i('💾 Persisting user data: ${user.id} / ${user.email}');
       await secureStorage.write(StorageKeys.userId, user.id);
       await secureStorage.write(StorageKeys.userEmail, user.email);
-      await secureStorage.write(StorageKeys.authToken, token);
+      await secureStorage.write(StorageKeys.accessToken, token);
       log.i('✅ User data persisted successfully');
     } catch (e) {
       log.e('❌ Failed to persist user data: $e', error: e);

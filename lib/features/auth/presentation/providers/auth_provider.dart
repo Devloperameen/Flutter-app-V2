@@ -71,15 +71,6 @@ class AuthNotifier extends _$AuthNotifier {
     }
   }
 
-  /// Verify email address
-  Future<void> verifyEmail() async {
-    try {
-      await ref.read(authRepositoryProvider).verifyEmail();
-    } catch (e, st) {
-      rethrow;
-    }
-  }
-
   /// Logout user
   Future<void> logout() async {
     try {
