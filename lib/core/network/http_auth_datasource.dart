@@ -12,6 +12,7 @@ import 'package:dio/dio.dart';
 import 'package:safe/core/network/api_client.dart';
 import 'package:safe/core/network/api_endpoints.dart';
 import 'package:safe/core/utils/app_logger.dart';
+import 'package:safe/features/auth/domain/models/user.dart';
 
 /// Authentication response model
 class AuthResponse {
@@ -302,6 +303,32 @@ class HttpAuthDatasource {
       log.i('✅ Password reset email sent');
     } catch (e) {
       log.e('❌ Error sending password reset: $e');
+      rethrow;
+    }
+  }
+
+  /// Get user profile
+  Future<User> getProfile() async {
+    try {
+      log.i('👤 Fetching user profile');
+
+      final response = await apiClient.get(ApiEndpoints.me);
+      final userData = response['data'] as Map<String, dynamic>;
+
+      return User(
+        id: userData['id'] as String,
+        email: userData['email'] as String,
+        firstName: userData['firstName'] as String? ?? '',
+        lastName: userData['lastName'] as String? ?? '',
+        avatarUrl: userData['avatar'] as String?,
+        isEmailVerified: userData['isEmailVerified'] as bool? ?? false,
+        createdAt: DateTime.parse(userData['createdAt'] as String? ?? DateTime.now().toIso8601String()),
+      );
+    } on DioException catch (e) {
+      log.e('❌ Dio error fetching profile: ${e.message}');
+      rethrow;
+    } catch (e) {
+      log.e('❌ Error fetching profile: $e');
       rethrow;
     }
   }
