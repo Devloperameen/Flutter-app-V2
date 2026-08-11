@@ -10,6 +10,7 @@
 /// - Group room-based chat
 /// - Unread message tracking
 /// - Emoji reactions
+library;
 
 import 'package:dio/dio.dart';
 import 'package:safe/core/network/api_client.dart';
@@ -19,9 +20,9 @@ import 'package:safe/features/community/domain/models/chat_message.dart';
 
 /// HTTP-based implementation of community chat datasource
 class HttpCommunityChatDatasource {
-  final ApiClient apiClient;
 
   HttpCommunityChatDatasource({required this.apiClient});
+  final ApiClient apiClient;
 
   // ─── Direct Messaging ───────────────────────────
 
@@ -122,7 +123,9 @@ class HttpCommunityChatDatasource {
         },
       );
 
-      final messageData = response['data'] as Map<String, dynamic>;
+      final messageData = Map<String, dynamic>.from(response['data'] as Map<String, dynamic>);
+      messageData['id'] = messageData['_id'] ?? messageData['id'];
+      
       final chatMessage = ChatMessage.fromJson(messageData);
 
       log.i('✅ Room message sent');
@@ -159,9 +162,11 @@ class HttpCommunityChatDatasource {
       );
 
       final messagesList = response['data'] as List;
-      final messages = messagesList
-          .map((msg) => ChatMessage.fromJson(msg as Map<String, dynamic>))
-          .toList();
+      final messages = messagesList.map((msg) {
+        final map = Map<String, dynamic>.from(msg as Map<String, dynamic>);
+        map['id'] = map['_id'] ?? map['id'];
+        return ChatMessage.fromJson(map);
+      }).toList();
 
       log.i('✅ Fetched ${messages.length} room messages');
       return messages;
@@ -207,9 +212,11 @@ class HttpCommunityChatDatasource {
       final response = await apiClient.get(ApiEndpoints.unreadMessages);
       final messagesList = response['data'] as List;
       
-      final messages = messagesList
-          .map((msg) => ChatMessage.fromJson(msg as Map<String, dynamic>))
-          .toList();
+      final messages = messagesList.map((msg) {
+        final map = Map<String, dynamic>.from(msg as Map<String, dynamic>);
+        map['id'] = map['_id'] ?? map['id'];
+        return ChatMessage.fromJson(map);
+      }).toList();
 
       log.i('✅ Fetched ${messages.length} unread messages');
       return messages;
