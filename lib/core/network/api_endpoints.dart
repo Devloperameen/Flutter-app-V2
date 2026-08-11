@@ -7,10 +7,10 @@
 /// static constants for fixed paths.
 abstract final class ApiEndpoints {
   /// Base URL — points to Express.js backend
+  /// Production: https://flutter-app-v2.onrender.com/api/v1
   /// For local development: http://localhost:5000/api/v1
   /// For physical devices: Use adb reverse or your machine IP
-  /// Example: http://192.168.1.100:5000/api/v1
-  static const String baseUrl = 'http://localhost:5000/api/v1';
+  static const String baseUrl = 'https://flutter-app-v2.onrender.com/api/v1';
 
   // ─── Auth ───────────────────────────────────────
   static const String login = '/auth/login';
