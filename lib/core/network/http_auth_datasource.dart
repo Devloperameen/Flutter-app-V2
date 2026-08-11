@@ -5,8 +5,8 @@
 /// Handles authentication with Express.js backend
 /// - User registration
 /// - User login
-/// - Token refresh
-/// - Token verification
+/// - Token management
+/// - User state caching
 
 import 'package:dio/dio.dart';
 import 'package:safe/core/network/api_client.dart';
@@ -56,6 +56,9 @@ class AuthResponse {
 class HttpAuthDatasource {
   final ApiClient apiClient;
 
+  /// Cache for current logged-in user
+  User? _currentUser;
+
   HttpAuthDatasource({required this.apiClient});
 
   // ─── Registration ───────────────────────────────
@@ -84,6 +87,19 @@ class HttpAuthDatasource {
       );
 
       final authResponse = AuthResponse.fromJson(response);
+
+      // Cache the user
+      _currentUser = User(
+        id: authResponse.userId,
+        email: authResponse.email,
+        firstName: authResponse.fullName.split(' ').first,
+        lastName: authResponse.fullName.split(' ').length > 1 
+          ? authResponse.fullName.split(' ').skip(1).join(' ')
+          : '',
+        avatarUrl: authResponse.avatar,
+        isEmailVerified: false,
+        createdAt: DateTime.now(),
+      );
 
       log.i('✅ Registration successful: ${authResponse.email}');
       return authResponse;
@@ -134,6 +150,19 @@ class HttpAuthDatasource {
 
       final authResponse = AuthResponse.fromJson(response);
 
+      // Cache the user
+      _currentUser = User(
+        id: authResponse.userId,
+        email: authResponse.email,
+        firstName: authResponse.fullName.split(' ').first,
+        lastName: authResponse.fullName.split(' ').length > 1 
+          ? authResponse.fullName.split(' ').skip(1).join(' ')
+          : '',
+        avatarUrl: authResponse.avatar,
+        isEmailVerified: false,
+        createdAt: DateTime.now(),
+      );
+
       log.i('✅ Login successful: ${authResponse.email}');
       return authResponse;
     } on DioException catch (e) {
@@ -182,9 +211,9 @@ class HttpAuthDatasource {
       final data = response['data'] as Map<String, dynamic>;
       
       final authResponse = AuthResponse(
-        userId: '', // Not provided in refresh response
-        email: '', // Not provided in refresh response
-        fullName: '', // Not provided in refresh response
+        userId: _currentUser?.id ?? '', // Keep existing user ID
+        email: _currentUser?.email ?? '', // Keep existing email
+        fullName: _currentUser?.fullName ?? '', // Keep existing name
         accessToken: data['accessToken'] as String,
         refreshToken: data['refreshToken'] as String,
       );
@@ -245,6 +274,9 @@ class HttpAuthDatasource {
       log.i('👋 Logging out');
 
       await apiClient.post(ApiEndpoints.logout);
+      
+      // Clear cached user
+      _currentUser = null;
 
       log.i('✅ Logout successful');
     } on DioException catch (e) {
@@ -256,31 +288,26 @@ class HttpAuthDatasource {
     }
   }
 
-  // ─── Auth State ────────────────────────────────
-
-  /// Get authentication state changes stream
-  /// In JWT auth, this is local state based on token availability
-  Stream<User?> get authStateChanges {
-    // Return empty stream - auth state is managed locally
-    return Stream.value(null);
-  }
+  // ─── Auth State ────────────────────────────
 
   /// Check if user is authenticated
   bool isAuthenticated() {
-    // Would check if token exists and is valid
-    return false;
+    return _currentUser != null;
   }
 
   /// Get current user without making network call
   User? getCurrentUser() {
-    // Would retrieve from local storage
-    return null;
+    return _currentUser;
   }
 
   /// Get current user ID
   String? getCurrentUserId() {
-    // Would retrieve from local storage
-    return null;
+    return _currentUser?.id;
+  }
+
+  /// Auth state changes stream
+  Stream<User?> get authStateChanges {
+    return Stream.value(_currentUser);
   }
 
   /// Update user profile
@@ -296,8 +323,23 @@ class HttpAuthDatasource {
   }) async {
     try {
       log.i('📝 Updating user profile');
-      // Would make PATCH request to /users/me
+
+      final data = <String, dynamic>{};
+      if (firstName != null) data['firstName'] = firstName;
+      if (lastName != null) data['lastName'] = lastName;
+      if (bio != null) data['bio'] = bio;
+      if (country != null) data['country'] = country;
+      if (gender != null) data['gender'] = gender;
+      if (occupation != null) data['occupation'] = occupation;
+      if (dateOfBirth != null) data['dateOfBirth'] = dateOfBirth.toIso8601String();
+      if (avatarUrl != null) data['avatar'] = avatarUrl;
+
+      await apiClient.patch('${ApiEndpoints.baseUrl}/users/me', data: data);
+
       log.i('✅ Profile updated');
+    } on DioException catch (e) {
+      log.e('❌ Dio error updating profile: ${e.message}');
+      rethrow;
     } catch (e) {
       log.e('❌ Error updating profile: $e');
       rethrow;
@@ -308,10 +350,18 @@ class HttpAuthDatasource {
   Future<void> sendPasswordReset(String email) async {
     try {
       log.i('📧 Sending password reset to $email');
-      // Would make POST request to /auth/password-reset
+
+      await apiClient.post(
+        '${ApiEndpoints.baseUrl}/auth/password-reset',
+        data: {'email': email},
+      );
+
       log.i('✅ Password reset email sent');
+    } on DioException catch (e) {
+      log.e('❌ Dio error sending reset: ${e.message}');
+      rethrow;
     } catch (e) {
-      log.e('❌ Error sending password reset: $e');
+      log.e('❌ Error sending reset: $e');
       rethrow;
     }
   }
@@ -324,15 +374,21 @@ class HttpAuthDatasource {
       final response = await apiClient.get(ApiEndpoints.me);
       final userData = response['data'] as Map<String, dynamic>;
 
-      return User(
+      final user = User(
         id: userData['id'] as String,
         email: userData['email'] as String,
         firstName: userData['firstName'] as String? ?? '',
         lastName: userData['lastName'] as String? ?? '',
         avatarUrl: userData['avatar'] as String?,
         isEmailVerified: userData['isEmailVerified'] as bool? ?? false,
-        createdAt: DateTime.parse(userData['createdAt'] as String? ?? DateTime.now().toIso8601String()),
+        createdAt: DateTime.tryParse(userData['createdAt'] as String? ?? '') ?? DateTime.now(),
       );
+
+      // Update cached user
+      _currentUser = user;
+
+      log.i('✅ Profile fetched: ${user.email}');
+      return user;
     } on DioException catch (e) {
       log.e('❌ Dio error fetching profile: ${e.message}');
       rethrow;
@@ -342,4 +398,3 @@ class HttpAuthDatasource {
     }
   }
 }
-
