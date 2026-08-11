@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:uuid/uuid.dart';
+import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 import 'package:safe/core/design/design.dart';
+import 'package:safe/core/network/api_endpoints.dart';
 import 'package:safe/core/providers/theme_provider.dart';
+import 'package:safe/core/providers/core_providers.dart';
 import 'package:safe/core/router/route_names.dart';
 import 'package:safe/features/auth/domain/models/user.dart';
 import 'package:safe/features/auth/presentation/providers/auth_provider.dart';
@@ -31,20 +32,84 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     setState(() => _isUploadingAvatar = true);
     try {
       final file = File(picked.path);
-      final storageRef = FirebaseStorage.instance
-          .ref().child('avatars').child('${const Uuid().v4()}.jpg');
-      await storageRef.putFile(file);
-      final url = await storageRef.getDownloadURL();
-      await ref.read(authNotifierProvider.notifier).updateProfile(avatarUrl: url);
+      
+      // Get API client from providers
+      final apiClient = ref.read(apiClientProvider);
+      
+      // Create FormData for file upload
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          file.path,
+          filename: file.path.split('/').last,
+        ),
+      });
+
+      // Upload to backend using correct endpoint
+      final response = await apiClient.dio.post(
+        ApiEndpoints.uploadAvatar,
+        data: formData,
+      );
+
+      // Handle response
+      if (response.statusCode == null || response.statusCode! >= 400) {
+        throw DioException(
+          requestOptions: response.requestOptions,
+          response: response,
+          error: 'Upload failed with status ${response.statusCode}',
+        );
+      }
+
+      // Extract URL from response (handle different response structures)
+      String? imageUrl;
+      if (response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        imageUrl = (data['data']?['url'] ?? data['url']) as String?;
+      }
+      
+      if (imageUrl == null || imageUrl.isEmpty) {
+        throw Exception('No image URL returned from server');
+      }
+      
+      // Update user profile with new avatar URL
+      await ref.read(authNotifierProvider.notifier).updateProfile(avatarUrl: imageUrl);
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile photo updated!')),
+          const SnackBar(
+            content: Text('Profile photo updated!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } on DioException catch (e) {
+      if (mounted) {
+        var errorMsg = 'Failed to upload image';
+        if (e.response?.statusCode == 401) {
+          errorMsg = 'Session expired. Please sign in again.';
+        } else if (e.response?.statusCode == 413) {
+          errorMsg = 'Image is too large. Please choose a smaller image.';
+        } else if (e.response?.statusCode == 415) {
+          errorMsg = 'Invalid file type. Please upload an image.';
+        } else if ((e.response?.statusCode ?? 0) >= 500) {
+          errorMsg = 'Server error. Please try again later.';
+        } else if (e.type == DioExceptionType.connectionTimeout) {
+          errorMsg = 'Connection timeout. Please check your internet.';
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload: $e')),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -388,6 +453,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _buildSettingsTile(theme, Icons.security_rounded, 'Security & Privacy', _showSecurityPrivacy),
           _buildDivider(theme),
           _buildSettingsTile(theme, Icons.help_outline_rounded, 'Help & Support', _showHelpSupport),
+          _buildDivider(theme),
+          ListTile(
+            leading: Icon(Icons.admin_panel_settings_rounded, color: Colors.red),
+            title: Text('Admin Dashboard', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            trailing: Icon(Icons.chevron_right_rounded, color: Colors.red),
+            onTap: () => context.goNamed('admin'),
+          ),
           _buildDivider(theme),
           ListTile(
             leading: Icon(Icons.logout_rounded, color: theme.colorScheme.error),

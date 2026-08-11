@@ -1,9 +1,10 @@
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:safe/core/utils/app_logger.dart';
+import 'package:safe/core/providers/core_providers.dart';
 import 'package:safe/features/auth/presentation/providers/auth_provider.dart';
 import 'package:safe/features/community/data/repositories/community_repository.dart';
 import 'package:safe/features/community/domain/models/post.dart';
@@ -97,15 +98,33 @@ class CommunityNotifier extends _$CommunityNotifier {
     required String storagePath,
   }) async {
     try {
-      final storageRef = FirebaseStorage.instance.ref().child(storagePath);
-      final uploadTask = await storageRef.putFile(file);
-      final url = await uploadTask.ref.getDownloadURL();
-      log.i('✅ Media uploaded: $url');
-      return url;
-    } on FirebaseException catch (e) {
-      log.w('⚠️ Firebase Storage upload failed (${e.code}): ${e.message}');
-      // Storage not set up, bucket missing, or permissions issue — post without media
-      return null;
+      // Use backend API instead of Firebase Storage
+      final apiClient = ref.read(apiClientProvider);
+      
+      // Create FormData for multipart upload
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          file.path,
+          filename: file.path.split('/').last,
+        ),
+      });
+
+      // Upload to backend
+      final response = await apiClient.dio.post(
+        '/uploads/community',
+        data: formData,
+      );
+
+      // Extract URL from response
+      final url = (response.data['data']?['url'] ?? response.data['url']) as String?;
+      
+      if (url != null) {
+        log.i('✅ Media uploaded: $url');
+        return url;
+      } else {
+        log.w('⚠️ Upload response missing URL');
+        return null;
+      }
     } catch (e) {
       log.w('⚠️ Media upload failed: $e');
       return null;

@@ -13,7 +13,14 @@ import 'package:safe/features/habits/presentation/screens/habit_calendar_screen.
 import 'package:safe/features/habits/domain/models/habit.dart';
 import 'package:safe/features/dashboard/presentation/screens/dashboard_screen_simple.dart';
 import 'package:safe/features/dashboard/presentation/screens/dashboard_shell.dart';
+import 'package:safe/features/dashboard/presentation/screens/analytics_focus_combined_screen.dart';
 import 'package:safe/features/onboarding/presentation/screens/splash_screen.dart';
+import 'package:safe/features/focus_timer/presentation/screens/focus_timer_screen.dart';
+import 'package:safe/features/analytics/presentation/screens/analytics_dashboard_screen.dart';
+import 'package:safe/features/activity/presentation/screens/activity_feed_screen.dart';
+import 'package:safe/features/content/presentation/screens/quote_screen.dart';
+import 'package:safe/features/content/presentation/screens/video_screen.dart';
+import 'package:safe/features/admin/presentation/screens/admin_dashboard_screen.dart';
 
 /// SAFE — Router Configuration
 ///
@@ -107,6 +114,26 @@ final GoRouter appRouter = GoRouter(
           ],
         ),
         GoRoute(
+          path: RoutePaths.analyticsFocus,
+          name: RouteNames.analyticsFocus,
+          builder: (context, state) => const AnalyticsFocusCombinedScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.activity,
+          name: RouteNames.activity,
+          builder: (context, state) => const ActivityFeedScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.quotes,
+          name: RouteNames.quotes,
+          builder: (context, state) => const QuoteScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.videos,
+          name: RouteNames.videos,
+          builder: (context, state) => const VideoScreen(),
+        ),
+        GoRoute(
           path: RoutePaths.community,
           name: RouteNames.community,
           builder: (context, state) => const CommunityScreen(),
@@ -117,6 +144,15 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => const ProfileScreen(),
         ),
       ],
+    ),
+
+    // ─────────────────────────────────────────────────
+    // Admin Dashboard (Outside Shell - Full Screen)
+    // ─────────────────────────────────────────────────
+    GoRoute(
+      path: '/admin',
+      name: 'admin',
+      builder: (context, state) => const AdminDashboardScreen(),
     ),
   ],
 );

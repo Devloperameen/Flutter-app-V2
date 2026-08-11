@@ -35,7 +35,6 @@ class AuthInterceptor extends QueuedInterceptor {
       ApiEndpoints.login,
       ApiEndpoints.register,
       ApiEndpoints.refreshToken,
-      ApiEndpoints.forgotPassword,
     ];
 
     final isPublic = publicPaths.any((p) => options.path.contains(p));

@@ -25,7 +25,7 @@ final communityPostsStreamProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CommunityPostsStreamRef = AutoDisposeStreamProviderRef<List<Post>>;
-String _$communityNotifierHash() => r'9cf1f02cc98558763e549c87831e3c2a744d2d7a';
+String _$communityNotifierHash() => r'11ebdbb41a833c18f1bc13ebf48c5ac82943c1d3';
 
 /// See also [CommunityNotifier].
 @ProviderFor(CommunityNotifier)

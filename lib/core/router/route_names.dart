@@ -14,8 +14,16 @@ abstract final class RouteNames {
   // Main tabs
   static const String dashboard = 'dashboard';
   static const String habits = 'habits';
+  static const String focusTimer = 'focusTimer';
+  static const String analytics = 'analytics';
+  static const String analyticsFocus = 'analyticsFocus';
   static const String community = 'community';
   static const String profile = 'profile';
+
+  // Content features
+  static const String activity = 'activity';
+  static const String quotes = 'quotes';
+  static const String videos = 'videos';
 
   // Sub-routes
   static const String habitDetail = 'habitDetail';
@@ -34,8 +42,16 @@ abstract final class RoutePaths {
   // Main tabs
   static const String dashboard = '/dashboard';
   static const String habits = '/habits';
+  static const String focusTimer = '/focus';
+  static const String analytics = '/analytics';
+  static const String analyticsFocus = '/focus-analytics';
   static const String community = '/community';
   static const String profile = '/profile';
+
+  // Content features
+  static const String activity = '/activity';
+  static const String quotes = '/quotes';
+  static const String videos = '/videos';
 
   // Sub-routes
   static const String habitDetail = '/habits/:id';

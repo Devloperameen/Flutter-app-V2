@@ -55,4 +55,109 @@ class ApiClient {
 
   /// The configured [Dio] instance. Use this for all API calls.
   Dio get dio => _dio;
+
+  /// Convenience method for GET requests
+  /// 
+  /// Usage:
+  /// ```dart
+  /// final response = await apiClient.get(
+  ///   '/endpoint',
+  ///   queryParameters: {'key': 'value'},
+  /// );
+  /// ```
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      path,
+      queryParameters: queryParameters,
+    );
+    return response.data ?? {};
+  }
+
+  /// Convenience method for POST requests
+  /// 
+  /// Usage:
+  /// ```dart
+  /// final response = await apiClient.post(
+  ///   '/endpoint',
+  ///   data: {'key': 'value'},
+  /// );
+  /// ```
+  Future<Map<String, dynamic>> post(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    void Function(int, int)? onSendProgress,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      onSendProgress: onSendProgress,
+    );
+    return response.data ?? {};
+  }
+
+  /// Convenience method for PUT requests
+  /// 
+  /// Usage:
+  /// ```dart
+  /// final response = await apiClient.put(
+  ///   '/endpoint',
+  ///   data: {'key': 'value'},
+  /// );
+  /// ```
+  Future<Map<String, dynamic>> put(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    final response = await _dio.put<Map<String, dynamic>>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+    );
+    return response.data ?? {};
+  }
+
+  /// Convenience method for DELETE requests
+  /// 
+  /// Usage:
+  /// ```dart
+  /// final response = await apiClient.delete('/endpoint');
+  /// ```
+  Future<Map<String, dynamic>> delete(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    final response = await _dio.delete<Map<String, dynamic>>(
+      path,
+      queryParameters: queryParameters,
+    );
+    return response.data ?? {};
+  }
+
+  /// Convenience method for PATCH requests
+  /// 
+  /// Usage:
+  /// ```dart
+  /// final response = await apiClient.patch(
+  ///   '/endpoint',
+  ///   data: {'key': 'value'},
+  /// );
+  /// ```
+  Future<Map<String, dynamic>> patch(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    final response = await _dio.patch<Map<String, dynamic>>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+    );
+    return response.data ?? {};
+  }
 }

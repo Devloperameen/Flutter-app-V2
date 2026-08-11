@@ -8,6 +8,42 @@ import 'package:safe/features/focus_timer/domain/models/timer_config.dart';
 
 part 'focus_timer_provider.g.dart';
 
+class TimerState {
+  final int secondsRemaining;
+  final int totalSeconds;
+  final bool isRunning;
+  final bool isPaused;
+  final String currentPhase;
+  final int cycleCount;
+
+  const TimerState({
+    required this.secondsRemaining,
+    required this.totalSeconds,
+    required this.isRunning,
+    required this.isPaused,
+    required this.currentPhase,
+    required this.cycleCount,
+  });
+
+  TimerState copyWith({
+    int? secondsRemaining,
+    int? totalSeconds,
+    bool? isRunning,
+    bool? isPaused,
+    String? currentPhase,
+    int? cycleCount,
+  }) {
+    return TimerState(
+      secondsRemaining: secondsRemaining ?? this.secondsRemaining,
+      totalSeconds: totalSeconds ?? this.totalSeconds,
+      isRunning: isRunning ?? this.isRunning,
+      isPaused: isPaused ?? this.isPaused,
+      currentPhase: currentPhase ?? this.currentPhase,
+      cycleCount: cycleCount ?? this.cycleCount,
+    );
+  }
+}
+
 @riverpod
 class FocusTimerNotifier extends _$FocusTimerNotifier {
   @override
@@ -22,8 +58,8 @@ class FocusTimerNotifier extends _$FocusTimerNotifier {
     );
   }
 
-  late FocusTimerDatasource _datasource = FocusTimerDatasource();
-  late FirebaseAuth _auth = FirebaseAuth.instance;
+  final FocusTimerDatasource _datasource = FocusTimerDatasource();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   Timer? _timer;
   int _secondsRemaining = 1500;
   int _totalSeconds = 1500;

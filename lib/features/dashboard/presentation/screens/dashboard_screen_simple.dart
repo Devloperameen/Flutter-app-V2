@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:safe/features/auth/presentation/providers/auth_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:safe/features/auth/domain/models/user.dart';
+import 'package:safe/features/dashboard/presentation/screens/timer_page.dart';
 
 /// Talk with Sadiq - Mindset & Habit Transformation App
 class DashboardScreenSimple extends ConsumerStatefulWidget {
@@ -20,10 +21,6 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
   int _currentCarouselIndex = 0;
   Timer? _carouselTimer;
   Timer? _quoteTimer;
-  Timer? _countdownTimer;
-  int _remainingSeconds = 0;
-  bool _isTimerRunning = false;
-  String _timerType = '';
   bool _isCarouselAutoScrolling = true;
   int _currentQuoteIndex = 0;
 
@@ -103,86 +100,8 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
   void dispose() {
     _quoteTimer?.cancel();
     _carouselTimer?.cancel();
-    _countdownTimer?.cancel();
     _carouselController.dispose();
     super.dispose();
-  }
-
-  void _startTimer(int minutes, String type) {
-    setState(() {
-      _remainingSeconds = minutes * 60;
-      _isTimerRunning = true;
-      _timerType = type;
-    });
-
-    _countdownTimer?.cancel();
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingSeconds > 0) {
-        setState(() {
-          _remainingSeconds--;
-        });
-      } else {
-        timer.cancel();
-        setState(() {
-          _isTimerRunning = false;
-        });
-        _showTimerComplete();
-      }
-    });
-  }
-
-  void _pauseTimer() {
-    _countdownTimer?.cancel();
-    // Timer paused but not stopped - user can resume
-  }
-
-  void _resumeTimer() {
-    if (_remainingSeconds > 0) {
-      _countdownTimer?.cancel();
-      _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (_remainingSeconds > 0) {
-          setState(() {
-            _remainingSeconds--;
-          });
-        } else {
-          timer.cancel();
-          setState(() {
-            _isTimerRunning = false;
-          });
-          _showTimerComplete();
-        }
-      });
-    }
-  }
-
-  void _stopTimer() {
-    _countdownTimer?.cancel();
-    setState(() {
-      _isTimerRunning = false;
-      _remainingSeconds = 0;
-    });
-  }
-
-  void _showTimerComplete() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('🎉 Great Work!'),
-        content: Text('You completed your $_timerType session!'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Done'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatTime(int seconds) {
-    final mins = seconds ~/ 60;
-    final secs = seconds % 60;
-    return '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
 
   Future<void> _openVideo(String url) async {
@@ -639,86 +558,106 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
           const SizedBox(height: 4),
           Text('Pomodoro Technique for focused productivity', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
           const SizedBox(height: 16),
-          if (_isTimerRunning) ...[
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(gradient: const LinearGradient(colors: [primaryBlue, darkBlue]), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: primaryBlue.withOpacity(0.3), blurRadius: 12)]),
-              child: Column(
-                children: [
-                  Text(_timerType, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 16),
-                  Text(_formatTime(_remainingSeconds), style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          if (_countdownTimer?.isActive ?? false) {
-                            _pauseTimer();
-                            setState(() => _isTimerRunning = false);
-                          } else {
-                            _resumeTimer();
-                            setState(() => _isTimerRunning = true);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: primaryBlue),
-                        icon: Icon((_countdownTimer?.isActive ?? false) ? Icons.pause_rounded : Icons.play_arrow_rounded),
-                        label: Text((_countdownTimer?.isActive ?? false) ? 'Pause' : 'Resume'),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: _stopTimer,
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                        icon: const Icon(Icons.stop_rounded),
-                        label: const Text('End'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ] else ...[
-            Row(
-              children: [
-                Expanded(
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _openTimerPage(context, 25, 'Deep Work'),
                   child: Container(
                     padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(16), border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5))),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
+                    ),
                     child: Column(
                       children: [
-                        Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: lightBlue.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.psychology_rounded, color: primaryBlue, size: 32)),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: lightBlue.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.psychology_rounded, color: primaryBlue, size: 32),
+                        ),
                         const SizedBox(height: 12),
                         const Text('Deep Work', style: TextStyle(fontWeight: FontWeight.w600), textAlign: TextAlign.center),
                         const SizedBox(height: 8),
                         const Text('25 min', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: primaryBlue)),
                         const SizedBox(height: 12),
-                        ElevatedButton.icon(onPressed: () => _startTimer(25, 'Deep Work'), icon: const Icon(Icons.play_arrow_rounded, size: 18), label: const Text('Start'), style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 36))),
+                        ElevatedButton.icon(
+                          onPressed: () => _openTimerPage(context, 25, 'Deep Work'),
+                          icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                          label: const Text('Start'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryBlue,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 36),
+                            elevation: 2,
+                            shadowColor: primaryBlue.withOpacity(0.5),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _openTimerPage(context, 50, 'Extended Focus'),
                   child: Container(
                     padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(16), border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5))),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
+                    ),
                     child: Column(
                       children: [
-                        Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: lightBlue.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.rocket_launch_rounded, color: primaryBlue, size: 32)),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: lightBlue.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.rocket_launch_rounded, color: primaryBlue, size: 32),
+                        ),
                         const SizedBox(height: 12),
                         const Text('Extended', style: TextStyle(fontWeight: FontWeight.w600), textAlign: TextAlign.center),
                         const SizedBox(height: 8),
                         const Text('50 min', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: primaryBlue)),
                         const SizedBox(height: 12),
-                        ElevatedButton.icon(onPressed: () => _startTimer(50, 'Extended Focus'), icon: const Icon(Icons.play_arrow_rounded, size: 18), label: const Text('Start'), style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 36))),
+                        ElevatedButton.icon(
+                          onPressed: () => _openTimerPage(context, 50, 'Extended Focus'),
+                          icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                          label: const Text('Start'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryBlue,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 36),
+                            elevation: 2,
+                            shadowColor: primaryBlue.withOpacity(0.5),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  /// Open timer on a separate page/screen
+  void _openTimerPage(BuildContext context, int minutes, String type) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TimerPage(minutes: minutes, timerType: type),
       ),
     );
   }
@@ -747,25 +686,26 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: habits.length,
             itemBuilder: (context, index) {
-              final habit = habits[index] as Map<String, dynamic>;
+              final habit = habits[index];
+              final done = habit['done'] as bool;
               return Container(
                 width: 140,
                 margin: EdgeInsets.only(right: index < habits.length - 1 ? 12 : 0),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: habit['done'] ? primaryBlue.withOpacity(0.1) : theme.colorScheme.surfaceContainerHighest,
+                  color: done ? primaryBlue.withValues(alpha: 0.1) : theme.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: habit['done'] ? primaryBlue : theme.colorScheme.outlineVariant.withOpacity(0.5)),
+                  border: Border.all(color: done ? primaryBlue : theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(habit['done'] ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                          color: habit['done'] ? primaryBlue : theme.colorScheme.outlineVariant, size: 20),
+                        Icon(done ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                          color: done ? primaryBlue : theme.colorScheme.outlineVariant, size: 20),
                         const Spacer(),
-                        Text(habit['done'] ? '✓' : '→', style: TextStyle(color: habit['done'] ? primaryBlue : theme.colorScheme.outlineVariant, fontWeight: FontWeight.bold)),
+                        Text(done ? '✓' : '→', style: TextStyle(color: done ? primaryBlue : theme.colorScheme.outlineVariant, fontWeight: FontWeight.bold)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -974,7 +914,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
             children: [
-              _buildActionButton(icon: Icons.play_arrow_rounded, label: 'Focus', color: primaryBlue, onTap: () => _startTimer(25, 'Deep Work')),
+              _buildActionButton(icon: Icons.play_arrow_rounded, label: 'Focus', color: primaryBlue, onTap: () => _openTimerPage(context, 25, 'Deep Work')),
               _buildActionButton(icon: Icons.task_alt_rounded, label: 'Habits', color: const Color(0xFF4CAF50), onTap: () {}),
               _buildActionButton(icon: Icons.forum_rounded, label: 'Community', color: const Color(0xFFFFC107), onTap: () {}),
               _buildActionButton(icon: Icons.video_library_rounded, label: 'Learning', color: const Color(0xFF9C27B0), onTap: () {}),

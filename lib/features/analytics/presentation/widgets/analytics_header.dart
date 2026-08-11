@@ -5,11 +5,11 @@ import 'package:safe/features/analytics/presentation/controllers/analytics_notif
 
 /// Header with period selector and category filter
 class AnalyticsHeader extends ConsumerWidget {
-  const AnalyticsHeader({Key? key}) : super(key: key);
+  const AnalyticsHeader({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final analyticsState = ref.watch(analyticsProvider);
+    final analyticsState = ref.watch(analyticsNotifierProvider);
     final notifier = ref.read(analyticsNotifierProvider.notifier);
 
     return Column(

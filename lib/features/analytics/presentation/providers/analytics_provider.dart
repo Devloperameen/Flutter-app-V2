@@ -5,6 +5,7 @@ import 'package:safe/features/analytics/domain/models/habit_analytics.dart';
 import 'package:safe/features/auth/data/repositories/auth_repository.dart';
 import 'package:safe/features/analytics/data/repositories/analytics_repository.dart';
 import 'package:safe/features/habits/presentation/providers/habits_stream_provider.dart';
+import 'package:safe/features/analytics/presentation/providers/analytics_providers.dart';
 
 part 'analytics_provider.g.dart';
 
@@ -20,7 +21,7 @@ Future<HabitAnalytics> habitAnalytics(HabitAnalyticsRef ref) async {
   final state = ref.watch(analyticsNotifierProvider);
   
   // Depend on habits stream to get real-time updates
-  final habits = await ref.watch(habitsStreamProvider.future);
+  // final habits = await ref.watch(habitsStreamProvider.future);
   
   if (state.data == null) {
     return HabitAnalytics.empty();
@@ -80,19 +81,18 @@ Future<AnalyticsComparison> periodComparison(PeriodComparisonRef ref) async {
     final repository = ref.read(analyticsRepositoryProvider);
     final previousPeriod = _getPreviousPeriod(state.selectedPeriod);
     
-    final previousData = await repository.getAnalytics(
-      userId: userId,
-      period: previousPeriod,
-      categoryFilter: state.selectedCategory,
+    // Fetch previous period's multi-period analytics data
+    final previousData = await repository.getMultiPeriodAnalytics(
+      period: previousPeriod.type.name,
     );
 
     return AnalyticsComparison(
       currentCompletions: state.data!.habitAnalytics.completedCount,
-      previousCompletions: previousData.habitAnalytics.completedCount,
+      previousCompletions: (previousData['habits']?['completedCount'] as num?)?.toInt() ?? 0,
       currentXp: state.data!.focusAnalytics.totalXpEarned,
-      previousXp: previousData.focusAnalytics.totalXpEarned,
+      previousXp: (previousData['focus']?['totalXP'] as num?)?.toInt() ?? 0,
       currentFocusMinutes: state.data!.focusAnalytics.completedMinutes,
-      previousFocusMinutes: previousData.focusAnalytics.completedMinutes,
+      previousFocusMinutes: (previousData['focus']?['totalMinutes'] as num?)?.toInt() ?? 0,
     );
   } catch (e) {
     return AnalyticsComparison.empty();
@@ -123,12 +123,9 @@ Future<HabitPerformance?> habitPerformance(
   }
 
   try {
-    final repository = ref.read(analyticsRepositoryProvider);
-    return await repository.getHabitPerformance(
-      userId: userId,
-      habitId: habitId,
-      period: state.selectedPeriod,
-    );
+    // Currently not supported by backend repository
+    // final repository = ref.read(analyticsRepositoryProvider);
+    return null;
   } catch (e) {
     return null;
   }

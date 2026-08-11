@@ -41,16 +41,16 @@ class AnalyticsState {
   }
 }
 
-/// Notifier for managing analytics state
-class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
-  AnalyticsNotifier()
-      : super(
-          AnalyticsState(
-            isLoading: true,
-            selectedPeriod: AnalyticsPeriodType.week.toPeriod(),
-            isOffline: false,
-          ),
-        );
+@riverpod
+class AnalyticsNotifier extends _$AnalyticsNotifier {
+  @override
+  AnalyticsState build() {
+    return AnalyticsState(
+      isLoading: true,
+      selectedPeriod: AnalyticsPeriodType.week.toPeriod(),
+      isOffline: false,
+    );
+  }
 
   /// Change the selected time period
   void setPeriod(AnalyticsPeriodType type) {
@@ -75,7 +75,7 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
   }
 
   /// Set loading state
-  void setLoading(bool isLoading) {
+  void setLoading({required bool isLoading}) {
     state = state.copyWith(isLoading: isLoading);
   }
 
@@ -97,33 +97,23 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
   }
 
   /// Set offline status
-  void setOffline(bool isOffline) {
+  void setOffline({required bool isOffline}) {
     state = state.copyWith(isOffline: isOffline);
   }
 
   /// Fetch analytics data
   void _fetchAnalytics() {
     // TODO: Implement fetching from repository
-    setLoading(false);
+    setLoading(isLoading: false);
   }
 
   /// Refresh analytics data
   Future<void> refresh() async {
-    setLoading(true);
+    setLoading(isLoading: true);
     try {
       _fetchAnalytics();
     } catch (e) {
       setError(e.toString());
     }
   }
-}
-
-@riverpod
-StateNotifier<AnalyticsState> analyticsNotifier(AnalyticsNotifierRef ref) {
-  return AnalyticsNotifier();
-}
-
-@riverpod
-AnalyticsState analytics(AnalyticsRef ref) {
-  return ref.watch(analyticsNotifierProvider);
 }

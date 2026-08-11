@@ -23,6 +23,22 @@ class CommunityRepository {
   /// Media URLs are passed through as-is — the UI's Image.network errorBuilder
   /// handles any broken/missing URLs gracefully without crashing the feed.
   static Post _mapToPost(Map<String, dynamic> msg) {
+    // Handle Firestore Timestamp → DateTime conversion
+    DateTime parseCreatedAt(dynamic value) {
+      if (value == null) return DateTime.now();
+      if (value is DateTime) return value;
+      if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+      // Firestore Timestamp object
+      if (value.runtimeType.toString() == 'Timestamp') {
+        try {
+          return (value as dynamic).toDate() as DateTime;
+        } catch (e) {
+          return DateTime.now();
+        }
+      }
+      return DateTime.now();
+    }
+
     return Post(
       id: (msg['id'] ?? '') as String,
       authorId: (msg['userId'] ?? msg['authorId'] ?? '') as String,
@@ -32,7 +48,7 @@ class CommunityRepository {
       content: (msg['content'] ?? msg['message'] ?? '') as String,
       likeCount: ((msg['likeCount'] ?? msg['likes'] ?? 0) as num).toInt(),
       commentCount: ((msg['commentCount'] ?? msg['replies'] ?? 0) as num).toInt(),
-      createdAt: DateTime.tryParse((msg['createdAt'] ?? '') as String) ?? DateTime.now(),
+      createdAt: parseCreatedAt(msg['createdAt']),
       isLikedByMe: (msg['isLikedByMe'] ?? false) as bool,
       // Only keep URLs that look like real HTTPS download URLs.
       // Bare Storage paths (gs:// or relative paths) are dropped.

@@ -175,9 +175,7 @@ class DashboardScreen extends ConsumerWidget {
                                 onTap: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (context) => FocusTimerScreen(
-                                        config: TimerConfig.presets[0],
-                                      ),
+                                      builder: (context) => const FocusTimerScreen(),
                                     ),
                                   );
                                 },
@@ -192,9 +190,7 @@ class DashboardScreen extends ConsumerWidget {
                                 onTap: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (context) => FocusTimerScreen(
-                                        config: TimerConfig.presets[1],
-                                      ),
+                                      builder: (context) => const FocusTimerScreen(),
                                     ),
                                   );
                                 },
@@ -221,7 +217,7 @@ class DashboardScreen extends ConsumerWidget {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontal),
                           child: Text(
-                            'Today\'s Habits',
+                            "Today's Habits",
                             style: theme.textTheme.titleLarge,
                           ).animate(delay: 600.ms).fadeIn(),
                         ),
@@ -298,7 +294,7 @@ class DashboardScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(AppSpacing.chipRadius),
                   ),
                   child: Text(
-                    'TODAY\'S HABIT',
+                    "TODAY'S HABIT",
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: Colors.white,
                       letterSpacing: 1.2,
@@ -400,7 +396,6 @@ class DashboardScreen extends ConsumerWidget {
               onPressed: () {
                 Navigator.of(context).pushNamed('/habits');
               },
-              type: SafeButtonType.primary,
             ),
           ],
         ),

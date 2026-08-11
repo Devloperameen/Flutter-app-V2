@@ -28,6 +28,7 @@ class DashboardShell extends StatelessWidget {
   static const _tabs = [
     RoutePaths.dashboard,
     RoutePaths.habits,
+    RoutePaths.analyticsFocus,  // Combined Analytics & Focus
     RoutePaths.community,
     RoutePaths.profile,
   ];
@@ -77,6 +78,11 @@ class DashboardShell extends StatelessWidget {
               icon: Icon(Icons.track_changes_outlined),
               selectedIcon: Icon(Icons.track_changes_rounded),
               label: 'Habits',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.bar_chart_outlined),
+              selectedIcon: Icon(Icons.bar_chart_rounded),
+              label: 'Analytics',
             ),
             NavigationDestination(
               icon: Icon(Icons.people_outline_rounded),
