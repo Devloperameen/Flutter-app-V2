@@ -59,18 +59,24 @@ logger.info('✅ Helmet security headers enabled');
 
 // 2. CORS Configuration
 const corsOptions = {
+  // In development, allow all origins (especially for mobile apps)
+  // In production, use the CORS_ORIGIN env variable
   origin: (origin, callback) => {
-    const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000').split(',');
-    
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+    if (process.env.NODE_ENV === 'production') {
+      const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000').split(',').map(o => o.trim());
+      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
     } else {
-      callback(new Error('Not allowed by CORS'));
+      // Development: allow all origins
+      callback(null, true);
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 };
 
 app.use(cors(corsOptions));
