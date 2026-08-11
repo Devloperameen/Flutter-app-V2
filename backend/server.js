@@ -48,6 +48,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const ENV = process.env.NODE_ENV || 'development';
 
+// Trust proxy - required for Render deployment with X-Forwarded-For headers
+app.set('trust proxy', 1);
+
 /**
  * ─────────────────────────────────────────────────
  * MIDDLEWARE CONFIGURATION
