@@ -139,7 +139,7 @@ const login = async (req, res, next) => {
 
     // ─── Find user by email ─────────────────────
     // Include password field (normally excluded)
-    const user = await User.findByEmail(email).select('+password');
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
     if (!user) {
       // Don't reveal if email exists (security)
       const errorResponse = error('Invalid email or password', 401);
