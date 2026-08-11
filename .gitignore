@@ -61,3 +61,4 @@ ios/Runner/GoogleService-Info.plist
 # API keys
 **/api_keys.dart
 **/secrets.dart
+TalkWithSadiq.apk
