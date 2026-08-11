@@ -213,7 +213,7 @@ class HttpAuthDatasource {
       final authResponse = AuthResponse(
         userId: _currentUser?.id ?? '', // Keep existing user ID
         email: _currentUser?.email ?? '', // Keep existing email
-        fullName: _currentUser?.fullName ?? '', // Keep existing name
+        fullName: _currentUser != null ? '${_currentUser!.firstName} ${_currentUser!.lastName}' : '', // Combine first and last
         accessToken: data['accessToken'] as String,
         refreshToken: data['refreshToken'] as String,
       );
