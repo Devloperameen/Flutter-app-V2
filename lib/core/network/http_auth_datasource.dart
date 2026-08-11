@@ -200,31 +200,6 @@ class HttpAuthDatasource {
     }
   }
 
-  // ─── Get Current User ──────────────────────────
-
-  /// Get current authenticated user profile
-  /// 
-  /// Requires valid access token
-  /// 
-  /// @returns: User data (id, email, name, avatar, etc)
-  Future<Map<String, dynamic>> getCurrentUser() async {
-    try {
-      log.i('👤 Fetching current user');
-
-      final response = await apiClient.get(ApiEndpoints.me);
-      final userData = response['data'] as Map<String, dynamic>;
-
-      log.i('✅ Current user fetched: ${userData['email']}');
-      return userData;
-    } on DioException catch (e) {
-      log.e('❌ Dio error fetching current user: ${e.message}');
-      rethrow;
-    } catch (e) {
-      log.e('❌ Error fetching current user: $e');
-      rethrow;
-    }
-  }
-
   // ─── Logout ────────────────────────────────────
 
   /// Logout user
