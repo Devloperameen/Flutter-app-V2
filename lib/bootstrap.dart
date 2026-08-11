@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:safe/core/services/firebase_service.dart';
 import 'package:safe/core/utils/app_logger.dart';
 
 /// Bootstrap the application.
@@ -10,20 +9,10 @@ import 'package:safe/core/utils/app_logger.dart';
 /// This function runs before the app starts and initializes:
 /// - Flutter bindings
 /// - SharedPreferences
-/// - Firebase
 /// - System UI configuration
 Future<SharedPreferences> bootstrap() async {
   // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Firebase first (required for auth and other services)
-  try {
-    await FirebaseService.initialize();
-    log.i('✅ Firebase initialized');
-  } catch (e) {
-    log.e('❌ Firebase initialization failed: $e', error: e);
-    // Continue anyway - app can work with mock data if Firebase unavailable
-  }
 
   // Initialize SharedPreferences
   final prefs = await SharedPreferences.getInstance();

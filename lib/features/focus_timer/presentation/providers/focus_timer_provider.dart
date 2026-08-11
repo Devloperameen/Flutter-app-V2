@@ -1,10 +1,11 @@
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:safe/core/utils/app_logger.dart';
-import 'package:safe/features/focus_timer/data/datasources/focus_timer_datasource.dart';
+import 'package:safe/features/auth/data/repositories/auth_repository.dart';
+import 'package:safe/features/focus_timer/data/datasources/http_focus_timer_datasource.dart';
 import 'package:safe/features/focus_timer/domain/models/focus_session.dart';
 import 'package:safe/features/focus_timer/domain/models/timer_config.dart';
+import 'package:safe/core/providers/core_providers.dart';
 
 part 'focus_timer_provider.g.dart';
 
@@ -58,8 +59,8 @@ class FocusTimerNotifier extends _$FocusTimerNotifier {
     );
   }
 
-  final FocusTimerDatasource _datasource = FocusTimerDatasource();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  late HttpFocusTimerDatasource _datasource;
+  late AuthRepository _authRepository;
   Timer? _timer;
   int _secondsRemaining = 1500;
   int _totalSeconds = 1500;
@@ -72,8 +73,13 @@ class FocusTimerNotifier extends _$FocusTimerNotifier {
     TimerConfig? config,
   }) async {
     try {
-      final userId = _auth.currentUser?.uid;
-      if (userId == null) throw Exception('User not authenticated');
+      _datasource = HttpFocusTimerDatasource(apiClient: ref.read(apiClientProvider));
+      _authRepository = ref.read(authRepositoryProvider);
+
+      final userId = _authRepository.getCurrentUserId();
+      if (userId == null || userId.isEmpty) {
+        throw Exception('User not authenticated');
+      }
 
       // Use provided config or default to deep work
       _currentConfig = config ?? TimerConfig.presets[0];
@@ -153,8 +159,8 @@ class FocusTimerNotifier extends _$FocusTimerNotifier {
       _isRunning = false;
       _timer?.cancel();
 
-      final userId = _auth.currentUser?.uid;
-      if (userId != null && _currentSessionId.isNotEmpty) {
+      final userId = _authRepository.getCurrentUserId();
+      if (userId != null && userId.isNotEmpty && _currentSessionId.isNotEmpty) {
         final completedSeconds = _totalSeconds - _secondsRemaining;
         // Use actual XP reward from the timer config
         await _datasource.completeFocusSession(

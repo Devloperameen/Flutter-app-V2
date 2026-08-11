@@ -1,41 +1,38 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:safe/core/errors/failures.dart';
-import 'package:safe/features/community/data/datasources/community_firestore_datasource.dart';
+import 'package:safe/features/community/data/datasources/community_remote_datasource.dart';
 import 'package:safe/features/community/domain/models/post.dart';
 import 'package:safe/core/utils/app_logger.dart';
+import 'package:safe/core/network/api_client.dart';
+import 'package:safe/core/providers/core_providers.dart';
 
 part 'community_repository.g.dart';
 
 @riverpod
 CommunityRepository communityRepository(CommunityRepositoryRef ref) {
-  return CommunityRepository();
+  final apiClient = ref.watch(apiClientProvider);
+  return CommunityRepository(
+    remoteDataSource: CommunityRemoteDataSource(apiClient: apiClient),
+  );
 }
 
 class CommunityRepository {
   CommunityRepository({
-    CommunityFirestoreDataSource? firestoreDataSource,
-  })  : _firestoreDataSource = firestoreDataSource ?? CommunityFirestoreDataSource();
+    required CommunityRemoteDataSource remoteDataSource,
+  }) : _remoteDataSource = remoteDataSource;
 
-  final CommunityFirestoreDataSource _firestoreDataSource;
+  final CommunityRemoteDataSource _remoteDataSource;
 
-  /// Maps a raw Firestore message map to a [Post].
+  /// Maps a raw message map to a [Post].
   /// Media URLs are passed through as-is — the UI's Image.network errorBuilder
   /// handles any broken/missing URLs gracefully without crashing the feed.
   static Post _mapToPost(Map<String, dynamic> msg) {
-    // Handle Firestore Timestamp → DateTime conversion
+    // Handle DateTime conversion
     DateTime parseCreatedAt(dynamic value) {
       if (value == null) return DateTime.now();
       if (value is DateTime) return value;
       if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
-      // Firestore Timestamp object
-      if (value.runtimeType.toString() == 'Timestamp') {
-        try {
-          return (value as dynamic).toDate() as DateTime;
-        } catch (e) {
-          return DateTime.now();
-        }
-      }
       return DateTime.now();
     }
 
@@ -44,14 +41,11 @@ class CommunityRepository {
       authorId: (msg['userId'] ?? msg['authorId'] ?? '') as String,
       authorName: (msg['userName'] ?? msg['authorName'] ?? 'Unknown') as String,
       authorRole: (msg['authorRole'] ?? 'Member') as String,
-      // Support both field names: 'message'/'content' and 'likes'/'likeCount', 'replies'/'commentCount'
       content: (msg['content'] ?? msg['message'] ?? '') as String,
       likeCount: ((msg['likeCount'] ?? msg['likes'] ?? 0) as num).toInt(),
       commentCount: ((msg['commentCount'] ?? msg['replies'] ?? 0) as num).toInt(),
       createdAt: parseCreatedAt(msg['createdAt']),
       isLikedByMe: (msg['isLikedByMe'] ?? false) as bool,
-      // Only keep URLs that look like real HTTPS download URLs.
-      // Bare Storage paths (gs:// or relative paths) are dropped.
       imageUrl: _sanitizeUrl(msg['imageUrl'] as String?),
       videoUrl: _sanitizeUrl(msg['videoUrl'] as String?),
     );
@@ -65,11 +59,11 @@ class CommunityRepository {
     return null;
   }
 
-  /// Get community posts/messages (Real Firestore only)
+  /// Get community posts/messages (from Express.js backend)
   Future<List<Post>> getPosts() async {
     try {
       log.i('📋 Fetching community posts');
-      final messages = await _firestoreDataSource.getMessages();
+      final messages = await _remoteDataSource.getMessages();
 
       final posts = messages.map((msg) {
         try {
@@ -102,7 +96,7 @@ class CommunityRepository {
     }
   }
 
-  /// Send a new message (Real Firestore only)
+  /// Send a new message
   Future<String> sendMessage({
     required String userId,
     required String userName,
@@ -112,7 +106,7 @@ class CommunityRepository {
   }) async {
     try {
       log.i('💬 Sending message');
-      return await _firestoreDataSource.sendMessage(
+      return await _remoteDataSource.sendMessage(
         userId: userId,
         userName: userName,
         message: message,
@@ -128,12 +122,12 @@ class CommunityRepository {
     }
   }
 
-  /// Get real-time messages stream (Real Firestore only)
+  /// Get real-time messages stream
   Stream<List<Post>> getMessagesStream() {
-    return _firestoreDataSource
+    return _remoteDataSource
         .getMessagesStream()
         .handleError((error) {
-          log.e('❌ Firestore stream error: $error');
+          log.e('❌ Stream error: $error');
         })
         .map((messages) {
           final posts = messages.map((msg) {
@@ -160,14 +154,14 @@ class CommunityRepository {
         });
   }
 
-  /// Like a message (Real Firestore only)
+  /// Like a message
   Future<void> likeMessage({
     required String messageId,
     required String userId,
   }) async {
     try {
       log.i('👍 Liking message: $messageId');
-      await _firestoreDataSource.likeMessage(messageId: messageId, userId: userId);
+      await _remoteDataSource.likeMessage(messageId: messageId, userId: userId);
     } catch (e, stackTrace) {
       log.e('❌ Failed to like message: $e', stackTrace: stackTrace);
       throw ServerFailure(
@@ -181,8 +175,7 @@ class CommunityRepository {
   Future<void> toggleLike(String postId, bool isLiked) async {
     try {
       if (isLiked) {
-        // In real implementation, would need to track current user
-        // For now, this is handled by likeMessage method
+        // Handled by likeMessage method
       }
     } catch (e, stackTrace) {
       throw ServerFailure(
@@ -201,7 +194,7 @@ class CommunityRepository {
   }) async {
     try {
       log.i('💬 Adding comment to post: $postId');
-      await _firestoreDataSource.addComment(
+      await _remoteDataSource.addComment(
         postId: postId,
         userId: userId,
         userName: userName,
@@ -216,7 +209,7 @@ class CommunityRepository {
     }
   }
 
-  /// Reply to a message (Real Firestore only)
+  /// Reply to a message
   Future<String> replyToMessage({
     required String messageId,
     required String userId,
@@ -225,7 +218,7 @@ class CommunityRepository {
   }) async {
     try {
       log.i('💬 Replying to message');
-      return await _firestoreDataSource.replyToMessage(
+      return await _remoteDataSource.replyToMessage(
         messageId: messageId,
         userId: userId,
         userName: userName,
@@ -242,7 +235,7 @@ class CommunityRepository {
 
   /// Get replies for a message (stream)
   Stream<List<Map<String, dynamic>>> getRepliesStream(String messageId) {
-    return _firestoreDataSource.getRepliesStream(messageId).handleError((e) {
+    return _remoteDataSource.getRepliesStream(messageId).handleError((e) {
       log.e('❌ Replies stream error: $e');
       return <Map<String, dynamic>>[];
     });
@@ -251,7 +244,7 @@ class CommunityRepository {
   /// Get user profile
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
     try {
-      return await _firestoreDataSource.getUserProfile(userId);
+      return await _remoteDataSource.getUserProfile(userId);
     } catch (e) {
       log.e('❌ Failed to fetch user profile: $e');
       return null;
@@ -262,7 +255,7 @@ class CommunityRepository {
   Future<List<Post>> searchMessages(String query) async {
     try {
       log.i('🔍 Searching messages');
-      final messages = await _firestoreDataSource.searchMessages(query);
+      final messages = await _remoteDataSource.searchMessages(query);
 
       final posts = messages.map((msg) {
         try {
@@ -297,7 +290,7 @@ class CommunityRepository {
     required String userId,
   }) async {
     try {
-      await _firestoreDataSource.deleteMessage(messageId: messageId, userId: userId);
+      await _remoteDataSource.deleteMessage(messageId: messageId, userId: userId);
     } catch (e, stackTrace) {
       throw ServerFailure(
         message: 'Failed to delete message',
@@ -308,7 +301,7 @@ class CommunityRepository {
 
   /// Get online users stream
   Stream<List<Map<String, dynamic>>> getOnlineUsersStream() {
-    return _firestoreDataSource.getOnlineUsersStream().handleError((e) {
+    return _remoteDataSource.getOnlineUsersStream().handleError((e) {
       log.e('❌ Online users stream error: $e');
       return <Map<String, dynamic>>[];
     });
@@ -317,7 +310,7 @@ class CommunityRepository {
   /// Get community statistics
   Future<Map<String, dynamic>> getCommunityStats() async {
     try {
-      return await _firestoreDataSource.getCommunityStats();
+      return await _remoteDataSource.getCommunityStats();
     } catch (e) {
       return {
         'totalMessages': 0,

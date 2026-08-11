@@ -1,21 +1,26 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:safe/core/utils/app_logger.dart';
-import 'package:safe/features/community/data/datasources/community_chat_firestore_datasource.dart';
+import 'package:safe/features/community/data/datasources/http_community_chat_datasource.dart';
 import 'package:safe/features/community/domain/models/chat_message.dart';
+import 'package:safe/core/network/api_client.dart';
+import 'package:safe/core/providers/core_providers.dart';
 
 part 'community_chat_repository.g.dart';
 
 @riverpod
 CommunityChatRepository communityChatRepository(CommunityChatRepositoryRef ref) {
-  return CommunityChatRepository();
+  final apiClient = ref.watch(apiClientProvider);
+  return CommunityChatRepository(
+    datasource: HttpCommunityChatDatasource(apiClient: apiClient),
+  );
 }
 
-/// Repository for real-time community chat operations
+/// Repository for real-time community chat operations (via HTTP)
 class CommunityChatRepository {
-  final CommunityChatFirestoreDataSource _datasource;
+  final HttpCommunityChatDatasource _datasource;
 
-  CommunityChatRepository({CommunityChatFirestoreDataSource? datasource})
-      : _datasource = datasource ?? CommunityChatFirestoreDataSource();
+  CommunityChatRepository({required HttpCommunityChatDatasource datasource})
+      : _datasource = datasource;
 
   /// Send a chat message
   /// Returns the message ID on success
@@ -39,11 +44,9 @@ class CommunityChatRepository {
 
       log.i('💬 Sending chat message: "$message"');
 
-      final messageId = await _datasource.sendMessage(
-        userId: userId,
-        userName: userName,
+      final messageId = await _datasource.sendDirectMessage(
+        receiverId: userId,
         message: message,
-        profilePhoto: profilePhoto,
       );
 
       return messageId;
@@ -72,7 +75,8 @@ class CommunityChatRepository {
   }) async {
     try {
       log.i('🗑️ Deleting message: $messageId');
-      await _datasource.deleteMessage(messageId: messageId, userId: userId);
+      // Call HTTP datasource to delete
+      await _datasource.deleteMessage(messageId: messageId);
     } catch (e, st) {
       log.e('❌ Failed to delete message: $e', stackTrace: st);
       rethrow;

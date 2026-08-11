@@ -2,32 +2,35 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:safe/core/errors/failures.dart';
 import 'package:safe/core/utils/app_logger.dart';
-import 'package:safe/features/dashboard/data/datasources/dashboard_firestore_datasource.dart';
+import 'package:safe/features/dashboard/data/datasources/dashboard_remote_datasource.dart';
 import 'package:safe/features/dashboard/domain/models/dashboard_data.dart';
 import 'package:safe/features/auth/data/repositories/auth_repository.dart';
+import 'package:safe/core/network/api_client.dart';
+import 'package:safe/core/providers/core_providers.dart';
 
 part 'dashboard_repository.g.dart';
 
 @riverpod
 DashboardRepository dashboardRepository(DashboardRepositoryRef ref) {
-  final firestoreDataSource = DashboardFirestoreDataSource();
+  final apiClient = ref.watch(apiClientProvider);
+  final remoteDataSource = DashboardRemoteDataSource(apiClient: apiClient);
   final authRepository = ref.watch(authRepositoryProvider);
   return DashboardRepository(
-    firestoreDataSource: firestoreDataSource,
+    remoteDataSource: remoteDataSource,
     authRepository: authRepository,
   );
 }
 
 class DashboardRepository {
   DashboardRepository({
-    required this.firestoreDataSource,
+    required this.remoteDataSource,
     required this.authRepository,
   });
 
-  final DashboardFirestoreDataSource firestoreDataSource;
+  final DashboardRemoteDataSource remoteDataSource;
   final AuthRepository authRepository;
 
-  /// Get user ID from AuthRepository (same as habits)
+  /// Get user ID from AuthRepository
   String? _getUserId() {
     final userId = authRepository.getCurrentUserId();
     if (userId != null && userId.isNotEmpty) {
@@ -40,7 +43,7 @@ class DashboardRepository {
   }
 
   /// Get dashboard data for current user
-  /// Uses real Firestore data only (no mock fallback)
+  /// Uses Express.js backend with MongoDB
   Future<DashboardData> getDashboardData() async {
     try {
       final userId = _getUserId();
@@ -50,8 +53,8 @@ class DashboardRepository {
         throw Exception('User not authenticated');
       }
 
-      log.d('📊 Loading dashboard from Firestore...');
-      return await firestoreDataSource.getDashboardData(userId);
+      log.d('📊 Loading dashboard from backend...');
+      return await remoteDataSource.getDashboardData(userId);
     } catch (e, stackTrace) {
       log.e('❌ Dashboard error: $e', error: e, stackTrace: stackTrace);
       throw ServerFailure(
@@ -61,7 +64,7 @@ class DashboardRepository {
     }
   }
 
-  /// Get today's mission (real Firestore only)
+  /// Get today's mission
   Future<Map<String, dynamic>?> getTodayMission() async {
     try {
       final userId = _getUserId();
@@ -69,7 +72,7 @@ class DashboardRepository {
         throw Exception('User not authenticated');
       }
 
-      return await firestoreDataSource.getTodayMission(userId);
+      return await remoteDataSource.getTodayMission(userId);
     } catch (e, stackTrace) {
       log.e('❌ Failed to load mission: $e', stackTrace: stackTrace);
       throw ServerFailure(
@@ -79,7 +82,7 @@ class DashboardRepository {
     }
   }
 
-  /// Complete today's mission (real Firestore only)
+  /// Complete today's mission
   Future<void> completeMission(String missionId, int xpReward) async {
     try {
       final userId = _getUserId();
@@ -87,7 +90,7 @@ class DashboardRepository {
         throw Exception('User not authenticated');
       }
 
-      await firestoreDataSource.completeMission(userId, missionId, xpReward);
+      await remoteDataSource.completeMission(userId, missionId, xpReward);
     } catch (e, stackTrace) {
       log.e('❌ Failed to complete mission: $e', stackTrace: stackTrace);
       throw ServerFailure(
@@ -97,7 +100,7 @@ class DashboardRepository {
     }
   }
 
-  /// Start a mission (real Firestore only)
+  /// Start a mission
   Future<void> startMission(String missionTitle) async {
     try {
       final userId = _getUserId();
@@ -105,7 +108,7 @@ class DashboardRepository {
         throw Exception('User not authenticated');
       }
 
-      await firestoreDataSource.startMission(userId, missionTitle);
+      await remoteDataSource.startMission(userId, missionTitle);
     } catch (e, stackTrace) {
       log.e('❌ Failed to start mission: $e', stackTrace: stackTrace);
       throw ServerFailure(
@@ -115,16 +118,14 @@ class DashboardRepository {
     }
   }
 
-  /// Get daily quote stream (real Firestore only)
+  /// Get daily quote stream
   Stream<String> getDailyQuoteStream() {
-    return firestoreDataSource.getDailyQuoteStream();
+    return remoteDataSource.getDailyQuoteStream();
   }
 
   /// Get dashboard data stream (real-time)
-  /// Falls back to mock data if Firestore fails
   Stream<DashboardData> getDashboardDataStream() {
-    // Note: This is async, we'll need to handle it differently
-    // For now, return a stream that loads the data
+    // Return a stream that loads the data
     return Stream.fromFuture(getDashboardData());
   }
 }

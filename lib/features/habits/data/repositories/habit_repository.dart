@@ -1,18 +1,19 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:safe/features/habits/data/datasources/habit_datasource_interface.dart';
-import 'package:safe/features/habits/data/datasources/firestore_habit_datasource.dart';
-import 'package:safe/features/habits/data/datasources/mock_habit_datasource.dart';
+import 'package:safe/features/habits/data/datasources/http_habit_datasource.dart';
 import 'package:safe/features/habits/domain/models/habit.dart';
 import 'package:safe/core/utils/app_logger.dart';
+import 'package:safe/core/providers/core_providers.dart';
 
 part 'habit_repository.g.dart';
 
 /// Riverpod provider for HabitRepository
-/// Using Firestore datasource with production security rules
+/// Using HTTP datasource (Express.js backend with MongoDB)
 @riverpod
 HabitRepository habitRepository(HabitRepositoryRef ref) {
+  final apiClient = ref.watch(apiClientProvider);
   return HabitRepository(
-    datasource: FirestoreHabitDatasource(),
+    datasource: HttpHabitDatasource(apiClient: apiClient),
   );
 }
 
@@ -41,16 +42,8 @@ class HabitRepository {
     try {
       return await _datasource.createHabit(userId, habit);
     } catch (e) {
-      // If permission denied, log and rethrow with helpful message
-      if (e.toString().contains('permission-denied')) {
-        log.e('❌ Firestore permission denied. Check security rules.');
-        throw Exception(
-          'Permission denied. Please ensure Firestore rules allow authenticated users to create habits.\n\nRequired rules:\n'
-          'match /users/{userId}/habits/{habitId} {\n'
-          '  allow read, write: if request.auth.uid == userId;\n'
-          '}'
-        );
-      }
+      // If permission denied or server error, log and rethrow
+      log.e('❌ Failed to create habit: $e');
       rethrow;
     }
   }
