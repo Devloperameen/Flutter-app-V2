@@ -41,10 +41,11 @@ A modern productivity & mindset transformation app built with Flutter. "Talk wit
 - Completion notifications
 
 ### 👥 Community Features
-- Real-time community chat powered by Firestore
+- Real-time community chat powered by Socket.IO
 - User-specific color coding for better distinction
-- Emoji picker for expressive messaging
+- Post images and videos with MongoDB storage
 - Like, share, and comment on posts
+- Real-time updates across all connected clients
 
 ### 📊 Analytics & Progress
 - Weekly focus time tracking
@@ -53,9 +54,10 @@ A modern productivity & mindset transformation app built with Flutter. "Talk wit
 - XP/Points reward system
 
 ### 🔐 Authentication
-- Firebase Authentication integration
-- Secure user sessions
-- User profile management
+- Express.js JWT token-based authentication
+- Secure user sessions with token validation
+- User profile management via REST API
+- Role-based access control (Admin, User)
 
 ---
 
@@ -67,7 +69,7 @@ fitflow_gym/
 │   ├── core/                          # Core utilities and configuration
 │   │   ├── design/                    # UI design system, colors, themes
 │   │   ├── router/                    # Navigation and routing
-│   │   ├── services/                  # Firebase and external services
+│   │   ├── services/                  # External services and API integration
 │   │   ├── security/                  # Input validation and security
 │   │   ├── network/                   # API endpoints and networking
 │   │   ├── errors/                    # Error handling
@@ -130,7 +132,6 @@ fitflow_gym/
 - Flutter 3.13.0 or higher
 - Dart 3.1.0 or higher
 - Android SDK / Xcode for mobile builds
-- Firebase project configured
 
 ### Installation
 
@@ -171,7 +172,7 @@ flutter build apk --target-platform android-arm64 --release
 This project follows **Clean Architecture** principles with **Riverpod** for state management:
 
 - **Domain Layer**: Business logic and entities (models, repositories interfaces)
-- **Data Layer**: Data sources (Firestore) and repository implementations
+- **Data Layer**: Data sources (Express REST API) and repository implementations
 - **Presentation Layer**: UI components, screens, and providers (Riverpod)
 
 ### State Management
@@ -180,8 +181,9 @@ This project follows **Clean Architecture** principles with **Riverpod** for sta
 - **AsyncValue**: For handling async operations (loading, error, data)
 
 ### Data Source
-- **Firestore**: Real-time database for community messages, user data, and missions
-- **Firebase Auth**: User authentication and session management
+- **Express.js**: RESTful API backend
+- **MongoDB**: NoSQL database for user data, habits, posts, and missions
+- **Socket.IO**: Real-time communication for community chat and notifications
 
 ---
 
@@ -192,7 +194,9 @@ This project follows **Clean Architecture** principles with **Riverpod** for sta
 | **Flutter 3.13+** | Cross-platform UI framework |
 | **Dart 3.1+** | Programming language |
 | **Riverpod 2.x** | State management & DI |
-| **Firebase** | Backend & real-time database |
+| **Express.js** | RESTful API backend |
+| **MongoDB** | NoSQL database |
+| **Socket.IO** | Real-time communication |
 | **url_launcher** | Open URLs and apps |
 | **share_plus** | Share functionality |
 | **emoji_picker_flutter** | Emoji selector |
@@ -236,11 +240,11 @@ This project follows **Clean Architecture** principles with **Riverpod** for sta
 ✅ Motivational quote section  
 
 ### Community Chat
-✅ Real-time Firestore integration  
+✅ Real-time Socket.IO integration  
 ✅ Color-coded user messages  
-✅ Emoji picker support  
+✅ Post images and videos  
 ✅ Message timestamps  
-✅ Like and comment features  
+✅ Like, share, and comment features  
 
 ### Timer
 ✅ 25/50-minute Pomodoro  
@@ -252,17 +256,18 @@ This project follows **Clean Architecture** principles with **Riverpod** for sta
 
 ## 🔧 Configuration
 
-### Firebase Setup
-1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Add Android/iOS apps to your project
-3. Download `google-services.json` and place it in `android/app/`
-4. Enable Firestore and Authentication in Firebase Console
+### Backend Setup
+1. Backend is already deployed on **Render**: https://flutter-app-v2.onrender.com/api/v1
+2. Uses **MongoDB** for data persistence
+3. **Socket.IO** for real-time features (community chat, notifications)
 
-### Environment Variables
-Create `.env` file (if needed) for sensitive data:
-```
-FIREBASE_PROJECT_ID=safe-5723a
-```
+### For Local Development (Optional)
+1. Clone backend repository
+2. Setup MongoDB locally
+3. Configure `.env` file with database credentials
+4. Run: `npm start`
+
+**Default Backend**: The app is pre-configured to use the production backend on Render. No local setup required for testing.
 
 ---
 
@@ -335,8 +340,9 @@ Transforming young minds through technology
 ## 🙏 Acknowledgments
 
 - Flutter and Dart communities
-- Firebase for backend services
+- Express.js and MongoDB communities
 - Material Design for UI guidelines
+- Socket.IO for real-time communication
 - All open-source contributors
 
 ---
