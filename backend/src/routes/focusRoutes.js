@@ -9,15 +9,18 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/authMiddleware');
-const { apiLimiter } = require('../middleware/rateLimiter');
+const { userBasedLimiter } = require('../middleware/rateLimiter');
 const focusSessionController = require('../controllers/focusSessionController');
 
 /**
  * POST /api/v1/focus
  * Create a new focus session
  * Body: { sessionType: '25min'|'50min'|'custom', duration?: number }
+ * 
+ * ✅ FIXED: Changed from apiLimiter (30/15min = too strict)
+ *           to userBasedLimiter (20/min per user - allows testing)
  */
-router.post('/', authenticate, apiLimiter, focusSessionController.createSession);
+router.post('/', authenticate, userBasedLimiter, focusSessionController.createSession);
 
 /**
  * GET /api/v1/focus/active

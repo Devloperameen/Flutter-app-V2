@@ -186,7 +186,26 @@ GoRouter appRouter(AppRouterRef ref) {
     GoRoute(
       path: '/admin',
       name: 'admin',
-      builder: (context, state) => const AdminDashboardScreen(),
+      builder: (context, state) {
+        // ✅ FIXED: Add role-based access control
+        final authNotifier = ref.read(authNotifierProvider);
+        final user = authNotifier.valueOrNull;
+        
+        // Check if user is admin
+        if (user == null || (user.role != 'admin' && user.role != 'super_admin')) {
+          // Not admin - redirect to home with error
+          Future.microtask(() {
+            if (context.mounted) {
+              context.goNamed('home');
+            }
+          });
+          return const Scaffold(
+            body: Center(child: Text('Access Denied')),
+          );
+        }
+        
+        return const AdminDashboardScreen();
+      },
     ),
   ],
   );

@@ -44,6 +44,7 @@ const focusRoutes = require('./src/routes/focusRoutes');
 const analyticsRoutes = require('./src/routes/analyticsRoutes');
 const activityRoutes = require('./src/routes/activityRoutes');
 const contentRoutes = require('./src/routes/contentRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
 
 // ─── Initialize Express App ─────────────────────────
 const app = express();
@@ -196,6 +197,7 @@ app.use(`${apiV1}/focus`, focusRoutes);
 app.use(`${apiV1}/analytics`, analyticsRoutes);
 app.use(`${apiV1}/activity`, activityRoutes);
 app.use(`${apiV1}/content`, contentRoutes);
+app.use(`${apiV1}/admin`, adminRoutes);
 
 logger.info('✅ All routes registered');
 

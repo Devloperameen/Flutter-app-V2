@@ -109,8 +109,8 @@ const authenticate = async (req, res, next) => {
 };
 
 /**
- * Check if user is authorized (optional admin check)
- * Can be extended for role-based access control
+ * Check if user is authorized (admin role check)
+ * Verifies user has 'admin' or 'super_admin' role
  * 
  * Usage: router.delete('/admin/users/:id', authenticate, authorize, deleteUser);
  */
@@ -119,7 +119,8 @@ const authorize = async (req, res, next) => {
     // Fetch full user data with role
     const user = await User.findById(req.user.id);
 
-    if (!user || user.role !== 'admin') {
+    // Allow both 'admin' and 'super_admin' roles
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to access this resource',

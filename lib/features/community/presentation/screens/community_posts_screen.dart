@@ -288,7 +288,24 @@ class _PostCardState extends ConsumerState<_PostCard> {
             Image.network(
               widget.post.imageUrl!,
               width: double.infinity,
+              height: 300,
               fit: BoxFit.cover,
+              // ✅ FIXED: Add loading indicator
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  height: 300,
+                  width: double.infinity,
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  child: const Center(
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                );
+              },
               errorBuilder: (_, _, _) => Container(
                 height: 200,
                 color: theme.colorScheme.surfaceContainerHighest,

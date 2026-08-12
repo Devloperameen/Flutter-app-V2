@@ -26,6 +26,8 @@ mixin _$User {
   String get firstName => throw _privateConstructorUsedError;
   String get lastName => throw _privateConstructorUsedError;
   String? get avatarUrl => throw _privateConstructorUsedError;
+  String get role =>
+      throw _privateConstructorUsedError; // ✅ FIXED: Added role field ('user', 'admin', 'super_admin')
   bool get isEmailVerified => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
 
@@ -49,6 +51,7 @@ abstract class $UserCopyWith<$Res> {
     String firstName,
     String lastName,
     String? avatarUrl,
+    String role,
     bool isEmailVerified,
     DateTime createdAt,
   });
@@ -74,6 +77,7 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? firstName = null,
     Object? lastName = null,
     Object? avatarUrl = freezed,
+    Object? role = null,
     Object? isEmailVerified = null,
     Object? createdAt = null,
   }) {
@@ -99,6 +103,10 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
                 ? _value.avatarUrl
                 : avatarUrl // ignore: cast_nullable_to_non_nullable
                       as String?,
+            role: null == role
+                ? _value.role
+                : role // ignore: cast_nullable_to_non_nullable
+                      as String,
             isEmailVerified: null == isEmailVerified
                 ? _value.isEmailVerified
                 : isEmailVerified // ignore: cast_nullable_to_non_nullable
@@ -127,6 +135,7 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
     String firstName,
     String lastName,
     String? avatarUrl,
+    String role,
     bool isEmailVerified,
     DateTime createdAt,
   });
@@ -149,6 +158,7 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? firstName = null,
     Object? lastName = null,
     Object? avatarUrl = freezed,
+    Object? role = null,
     Object? isEmailVerified = null,
     Object? createdAt = null,
   }) {
@@ -174,6 +184,10 @@ class __$$UserImplCopyWithImpl<$Res>
             ? _value.avatarUrl
             : avatarUrl // ignore: cast_nullable_to_non_nullable
                   as String?,
+        role: null == role
+            ? _value.role
+            : role // ignore: cast_nullable_to_non_nullable
+                  as String,
         isEmailVerified: null == isEmailVerified
             ? _value.isEmailVerified
             : isEmailVerified // ignore: cast_nullable_to_non_nullable
@@ -196,6 +210,7 @@ class _$UserImpl implements _User {
     required this.firstName,
     required this.lastName,
     this.avatarUrl,
+    this.role = 'user',
     this.isEmailVerified = false,
     required this.createdAt,
   });
@@ -215,13 +230,17 @@ class _$UserImpl implements _User {
   final String? avatarUrl;
   @override
   @JsonKey()
+  final String role;
+  // ✅ FIXED: Added role field ('user', 'admin', 'super_admin')
+  @override
+  @JsonKey()
   final bool isEmailVerified;
   @override
   final DateTime createdAt;
 
   @override
   String toString() {
-    return 'User(id: $id, email: $email, firstName: $firstName, lastName: $lastName, avatarUrl: $avatarUrl, isEmailVerified: $isEmailVerified, createdAt: $createdAt)';
+    return 'User(id: $id, email: $email, firstName: $firstName, lastName: $lastName, avatarUrl: $avatarUrl, role: $role, isEmailVerified: $isEmailVerified, createdAt: $createdAt)';
   }
 
   @override
@@ -237,6 +256,7 @@ class _$UserImpl implements _User {
                 other.lastName == lastName) &&
             (identical(other.avatarUrl, avatarUrl) ||
                 other.avatarUrl == avatarUrl) &&
+            (identical(other.role, role) || other.role == role) &&
             (identical(other.isEmailVerified, isEmailVerified) ||
                 other.isEmailVerified == isEmailVerified) &&
             (identical(other.createdAt, createdAt) ||
@@ -252,6 +272,7 @@ class _$UserImpl implements _User {
     firstName,
     lastName,
     avatarUrl,
+    role,
     isEmailVerified,
     createdAt,
   );
@@ -277,6 +298,7 @@ abstract class _User implements User {
     required final String firstName,
     required final String lastName,
     final String? avatarUrl,
+    final String role,
     final bool isEmailVerified,
     required final DateTime createdAt,
   }) = _$UserImpl;
@@ -293,6 +315,8 @@ abstract class _User implements User {
   String get lastName;
   @override
   String? get avatarUrl;
+  @override
+  String get role; // ✅ FIXED: Added role field ('user', 'admin', 'super_admin')
   @override
   bool get isEmailVerified;
   @override

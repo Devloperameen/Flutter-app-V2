@@ -12,6 +12,7 @@ _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
   firstName: json['firstName'] as String,
   lastName: json['lastName'] as String,
   avatarUrl: json['avatarUrl'] as String?,
+  role: json['role'] as String? ?? 'user',
   isEmailVerified: json['isEmailVerified'] as bool? ?? false,
   createdAt: DateTime.parse(json['createdAt'] as String),
 );
@@ -23,6 +24,7 @@ Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
       'firstName': instance.firstName,
       'lastName': instance.lastName,
       'avatarUrl': instance.avatarUrl,
+      'role': instance.role,
       'isEmailVerified': instance.isEmailVerified,
       'createdAt': instance.createdAt.toIso8601String(),
     };

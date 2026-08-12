@@ -11,6 +11,7 @@ class User with _$User {
     required String firstName,
     required String lastName,
     String? avatarUrl,
+    @Default('user') String role, // ✅ FIXED: Added role field ('user', 'admin', 'super_admin')
     @Default(false) bool isEmailVerified,
     required DateTime createdAt,
   }) = _User;

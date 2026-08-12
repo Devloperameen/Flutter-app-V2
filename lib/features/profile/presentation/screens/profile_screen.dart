@@ -50,48 +50,78 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
       log.i('🔄 Uploading to: ${ApiEndpoints.uploadAvatar}');
 
-      // Upload to backend using correct endpoint
-      final response = await apiClient.dio.post(
-        ApiEndpoints.uploadAvatar,
-        data: formData,
-      );
+      // ✅ FIXED: Add retry mechanism with exponential backoff
+      int retryCount = 0;
+      DioException? lastError;
+      
+      while (retryCount < 3) {
+        try {
+          // Upload to backend using correct endpoint
+          final response = await apiClient.dio.post(
+            ApiEndpoints.uploadAvatar,
+            data: formData,
+          ).timeout(const Duration(seconds: 30));
 
-      log.i('✅ Upload response status: ${response.statusCode}');
-      log.d('Upload response: ${response.data}');
+          log.i('✅ Upload response status: ${response.statusCode}');
+          log.d('Upload response: ${response.data}');
 
-      // Handle response
-      if (response.statusCode == null || response.statusCode! >= 400) {
-        throw DioException(
-          requestOptions: response.requestOptions,
-          response: response,
-          error: 'Upload failed with status ${response.statusCode}',
-        );
-      }
+          // Handle response
+          if (response.statusCode == null || response.statusCode! >= 400) {
+            throw DioException(
+              requestOptions: response.requestOptions,
+              response: response,
+              error: 'Upload failed with status ${response.statusCode}',
+            );
+          }
 
-      // Extract URL from response (handle different response structures)
-      String? imageUrl;
-      if (response.data is Map<String, dynamic>) {
-        final data = response.data as Map<String, dynamic>;
-        imageUrl = (data['data']?['url'] ?? data['url']) as String?;
+          // Extract URL from response (handle different response structures)
+          String? imageUrl;
+          if (response.data is Map<String, dynamic>) {
+            final data = response.data as Map<String, dynamic>;
+            imageUrl = (data['data']?['url'] ?? data['url']) as String?;
+          }
+          
+          if (imageUrl == null || imageUrl.isEmpty) {
+            throw Exception('No image URL returned from server');
+          }
+          
+          log.i('✅ Got image URL: $imageUrl');
+          
+          // ✅ FIXED: Clear image cache for new image
+          imageCache.clear();
+          imageCache.clearLiveImages();
+          
+          // Update user profile with new avatar URL
+          await ref.read(authNotifierProvider.notifier).updateProfile(avatarUrl: imageUrl);
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('✅ Profile photo updated!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+          
+          // Success - break retry loop
+          return;
+          
+        } on DioException catch (e) {
+          lastError = e;
+          retryCount++;
+          
+          if (retryCount < 3) {
+            // Exponential backoff: 1s, 2s, 4s
+            final backoffMs = (1000 * (2 ^ (retryCount - 1))).toInt();
+            log.w('⚠️ Upload attempt $retryCount failed, retrying in ${backoffMs}ms');
+            await Future.delayed(Duration(milliseconds: backoffMs));
+          }
+        }
       }
       
-      if (imageUrl == null || imageUrl.isEmpty) {
-        throw Exception('No image URL returned from server');
-      }
+      // All retries failed
+      throw lastError ?? Exception('Upload failed after 3 attempts');
       
-      log.i('✅ Got image URL: $imageUrl');
-      
-      // Update user profile with new avatar URL
-      await ref.read(authNotifierProvider.notifier).updateProfile(avatarUrl: imageUrl);
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile photo updated!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
     } on DioException catch (e) {
       log.e('❌ Dio error uploading avatar: ${e.message}');
       log.e('Response status: ${e.response?.statusCode}');
@@ -327,7 +357,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             // ─── Settings List ───
             Align(alignment: Alignment.centerLeft, child: Text('Account', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))).animate(delay: 400.ms).fadeIn(),
             const SizedBox(height: AppSpacing.md),
-            _buildSettingsList(theme).animate(delay: 500.ms).fadeIn().slideY(begin: 0.1),
+            _buildSettingsList(theme, userAsync.valueOrNull).animate(delay: 500.ms).fadeIn().slideY(begin: 0.1),
             const SizedBox(height: AppSpacing.xxxl),
           ],
         ),
@@ -461,7 +491,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildSettingsList(ThemeData theme) {
+  Widget _buildSettingsList(ThemeData theme, User? user) {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
@@ -478,13 +508,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _buildDivider(theme),
           _buildSettingsTile(theme, Icons.help_outline_rounded, 'Help & Support', _showHelpSupport),
           _buildDivider(theme),
-          ListTile(
-            leading: Icon(Icons.admin_panel_settings_rounded, color: Colors.red),
-            title: Text('Admin Dashboard', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-            trailing: Icon(Icons.chevron_right_rounded, color: Colors.red),
-            onTap: () => context.goNamed('admin'),
-          ),
-          _buildDivider(theme),
+          // ✅ FIXED: Only show admin button to admin users
+          if (user?.role == 'admin' || user?.role == 'super_admin') ...[
+            ListTile(
+              leading: Icon(Icons.admin_panel_settings_rounded, color: Colors.red),
+              title: Text('Admin Dashboard', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              trailing: Icon(Icons.chevron_right_rounded, color: Colors.red),
+              onTap: () => context.goNamed('admin'),
+            ),
+            _buildDivider(theme),
+          ],
           ListTile(
             leading: Icon(Icons.logout_rounded, color: theme.colorScheme.error),
             title: Text('Sign Out', style: TextStyle(color: theme.colorScheme.error)),
