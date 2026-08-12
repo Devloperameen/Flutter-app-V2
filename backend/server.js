@@ -33,6 +33,7 @@ const { connectDB } = require('./src/config/database');
 const errorHandler = require('./src/middleware/errorHandler');
 const logger = require('./src/utils/logger');
 const { generalLimiter, authLimiter } = require('./src/middleware/rateLimiter');
+const Post = require('./src/models/Post'); // ✅ Import Post model for Socket.IO
 
 // ─── Routes ─────────────────────────────────────────
 const authRoutes = require('./src/routes/authRoutes');
@@ -99,11 +100,46 @@ io.on('connection', (socket) => {
     logger.info(`🔐 Socket.IO authentication: ${socket.id}`);
   });
 
-  // Handle chat events
-  socket.on('message:new', (data) => {
-    logger.info(`💬 New message from ${socket.id}: ${data.message}`);
-    // Broadcast to all clients
-    io.emit('message:received', data);
+  // Handle chat events - SAVE TO DATABASE
+  socket.on('chat:message', async (data) => {
+    try {
+      logger.info(`💬 New message from ${socket.id}: ${data.content}`);
+      
+      // Create post in database
+      const newPost = await Post.create({
+        authorId: data.userId,
+        authorName: data.userName || 'Anonymous',
+        authorRole: 'Member',
+        content: data.content,
+        imageUrl: data.imageUrl || null,
+        videoUrl: data.videoUrl || null,
+      });
+
+      // Map to response format
+      const postData = {
+        id: newPost._id,
+        userId: newPost.authorId,
+        userName: newPost.authorName,
+        authorName: newPost.authorName,
+        authorRole: newPost.authorRole,
+        content: newPost.content,
+        imageUrl: newPost.imageUrl,
+        videoUrl: newPost.videoUrl,
+        likeCount: 0,
+        commentCount: 0,
+        createdAt: newPost.createdAt,
+        isLikedByMe: false,
+      };
+
+      logger.info(`✅ Post saved to database: ${newPost._id}`);
+      
+      // Broadcast to all connected clients
+      io.emit('chat:message', postData);
+      logger.info(`📢 Broadcasted post to all clients`);
+    } catch (error) {
+      logger.error(`❌ Error saving post: ${error.message}`);
+      socket.emit('error', { message: 'Failed to save post', error: error.message });
+    }
   });
 
   // Handle disconnect
