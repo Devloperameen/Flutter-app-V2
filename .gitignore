@@ -61,11 +61,34 @@ backend/.env
 backend/.env.local
 backend/.env.*.local
 
-# API keys
+# API keys and sensitive data
 **/api_keys.dart
 **/secrets.dart
+**/credentials.json
+
+# APK files
+*.apk
 TalkWithSadiq.apk
+sadiqtalk.apk
 
 # Keystore files
 *.jks
+*.keystore
 key.properties
+
+# Sensitive configuration
+credentials/
+secrets/
+
+# Firebase credentials
+**/firebase_credentials.json
+**/service_account_key.json
+
+# Database backups
+*.db
+*.db-journal
+
+# Temporary files
+*.tmp
+*.temp
+*.lock
