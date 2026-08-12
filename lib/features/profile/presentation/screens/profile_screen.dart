@@ -12,6 +12,8 @@ import 'package:safe/core/providers/core_providers.dart';
 import 'package:safe/core/providers/theme_provider.dart';
 import 'package:safe/core/router/route_names.dart';
 import 'package:safe/core/utils/app_logger.dart';
+import 'package:safe/features/analytics/domain/models/user_rank.dart';
+import 'package:safe/features/analytics/presentation/providers/analytics_providers.dart';
 import 'package:safe/features/auth/domain/models/user.dart';
 import 'package:safe/features/auth/presentation/providers/auth_provider.dart';
 import 'package:safe/features/community/presentation/screens/create_post_screen.dart';
@@ -458,14 +460,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildStatsGrid(ThemeData theme) {
-    return Row(
-      children: [
-        Expanded(child: _buildStatItem(theme, title: 'Rank', value: '#12', icon: Icons.emoji_events_rounded)),
-        Container(width: 1, height: 40, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
-        Expanded(child: _buildStatItem(theme, title: 'Deep Work', value: '142h', icon: Icons.timer_rounded)),
-        Container(width: 1, height: 40, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
-        Expanded(child: _buildStatItem(theme, title: 'Days', value: '45', icon: Icons.local_fire_department_rounded)),
-      ],
+    final rankAsync = ref.watch(userRankProvider);
+    
+    return rankAsync.when(
+      data: (UserRank rankData) {
+        return Row(
+          children: [
+            Expanded(child: _buildStatItem(theme, title: 'Rank', value: '#${rankData.rank}', icon: Icons.emoji_events_rounded)),
+            Container(width: 1, height: 40, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
+            Expanded(child: _buildStatItem(theme, title: 'Deep Work', value: '${rankData.focusHours}h', icon: Icons.timer_rounded)),
+            Container(width: 1, height: 40, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
+            Expanded(child: _buildStatItem(theme, title: 'Days', value: '${rankData.streakDays}', icon: Icons.local_fire_department_rounded)),
+          ],
+        );
+      },
+      loading: () => Row(
+        children: [
+          Expanded(child: _buildStatItem(theme, title: 'Rank', value: '--', icon: Icons.emoji_events_rounded)),
+          Container(width: 1, height: 40, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
+          Expanded(child: _buildStatItem(theme, title: 'Deep Work', value: '--h', icon: Icons.timer_rounded)),
+          Container(width: 1, height: 40, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
+          Expanded(child: _buildStatItem(theme, title: 'Days', value: '--', icon: Icons.local_fire_department_rounded)),
+        ],
+      ),
+      error: (_, __) => Row(
+        children: [
+          Expanded(child: _buildStatItem(theme, title: 'Rank', value: 'N/A', icon: Icons.emoji_events_rounded)),
+          Container(width: 1, height: 40, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
+          Expanded(child: _buildStatItem(theme, title: 'Deep Work', value: 'N/A', icon: Icons.timer_rounded)),
+          Container(width: 1, height: 40, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
+          Expanded(child: _buildStatItem(theme, title: 'Days', value: 'N/A', icon: Icons.local_fire_department_rounded)),
+        ],
+      ),
     );
   }
 

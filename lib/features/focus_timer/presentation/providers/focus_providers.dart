@@ -28,19 +28,78 @@ final activeFocusSessionProvider =
 });
 
 // ─────────────────────────────────────────────────
-// CREATE SESSION PROVIDER
+// CREATE SESSION PROVIDER (Legacy - kept for compatibility)
 // ─────────────────────────────────────────────────
 
 /// Creates a new focus session
 /// Usage: ref.read(createFocusSessionProvider(request).future)
+/// NOTE: This calls the new startSession method internally
 final createFocusSessionProvider =
     FutureProvider.family<FocusSession, ({String sessionType, int duration})>(
   (ref, params) async {
     final repository = ref.watch(focusRepositoryProvider);
-    return repository.createSession(
+    return repository.startSession(
       sessionType: params.sessionType,
       duration: params.duration,
     );
+  },
+);
+
+// ═════════════════════════════════════════════════
+// ✅ FRESH BUILD - Start, Pause, Resume, Stop
+// ═════════════════════════════════════════════════
+
+/// START a new focus session
+/// Usage: await ref.read(startFocusSessionProvider(params).future)
+final startFocusSessionProvider = FutureProvider.family<FocusSession, ({String sessionType, int duration})>(
+  (ref, params) async {
+    final repository = ref.watch(focusRepositoryProvider);
+    final session = await repository.startSession(
+      sessionType: params.sessionType,
+      duration: params.duration,
+    );
+    // Refresh active session and stats
+    ref.invalidate(activeFocusSessionProvider);
+    ref.invalidate(focusDailyStatsProvider);
+    return session;
+  },
+);
+
+/// PAUSE the active focus session
+/// Usage: await ref.read(pauseFocusSessionProvider(sessionId).future)
+final pauseFocusSessionProvider = FutureProvider.family<FocusSession, String>(
+  (ref, sessionId) async {
+    final repository = ref.watch(focusRepositoryProvider);
+    final session = await repository.pauseSession(sessionId);
+    // Refresh active session
+    ref.invalidate(activeFocusSessionProvider);
+    return session;
+  },
+);
+
+/// RESUME a paused focus session
+/// Usage: await ref.read(resumeFocusSessionProvider(sessionId).future)
+final resumeFocusSessionProvider = FutureProvider.family<FocusSession, String>(
+  (ref, sessionId) async {
+    final repository = ref.watch(focusRepositoryProvider);
+    final session = await repository.resumeSession(sessionId);
+    // Refresh active session
+    ref.invalidate(activeFocusSessionProvider);
+    return session;
+  },
+);
+
+/// STOP/END the active focus session
+/// Usage: await ref.read(stopFocusSessionProvider(sessionId).future)
+final stopFocusSessionProvider = FutureProvider.family<FocusSession, String>(
+  (ref, sessionId) async {
+    final repository = ref.watch(focusRepositoryProvider);
+    final session = await repository.stopSession(sessionId);
+    // Refresh all related providers
+    ref.invalidate(activeFocusSessionProvider);
+    ref.invalidate(focusDailyStatsProvider);
+    ref.invalidate(focusWeeklyStatsProvider);
+    return session;
   },
 );
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:safe/features/analytics/domain/models/analytics_models.dart';
+import 'package:safe/features/analytics/domain/models/user_rank.dart';
 import 'package:safe/features/analytics/presentation/providers/analytics_providers.dart';
 
 /// Analytics Dashboard Screen

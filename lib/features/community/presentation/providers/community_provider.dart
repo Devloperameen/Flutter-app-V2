@@ -15,9 +15,24 @@ part 'community_provider.g.dart';
 /// `communityPostsStreamProvider` will get real‑time updates from
 /// the repository's broadcast stream.
 @riverpod
-Stream<List<Post>> communityPostsStream(CommunityPostsStreamRef ref) {
+Stream<List<Post>> communityPostsStream(CommunityPostsStreamRef ref) async* {
   final repository = ref.watch(communityRepositoryProvider);
-  return repository.livePostsStream;
+  
+  // ✅ Load initial posts before streaming
+  try {
+    final initialPosts = await repository.getPosts();
+    yield initialPosts;
+    log.i('✅ Initial posts loaded: ${initialPosts.length}');
+  } catch (e) {
+    log.e('❌ Failed to load initial posts: $e');
+    yield [];
+  }
+  
+  // Then stream updates from Socket.IO
+  yield* repository.livePostsStream.map((posts) {
+    log.i('📡 Stream update: ${posts.length} posts');
+    return posts;
+  });
 }
 
 @riverpod
@@ -119,8 +134,13 @@ class CommunityNotifier extends _$CommunityNotifier {
         ),
       });
 
+      // ✅ FIXED: Use correct upload endpoints
+      final fileName = file.path.split('/').last;
+      final isImage = fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png');
+      final uploadEndpoint = isImage ? '/uploads/post-image' : '/uploads/post-video';
+
       final response = await apiClient.dio.post(
-        '/uploads/community',
+        uploadEndpoint,
         data: formData,
       );
 
@@ -183,6 +203,8 @@ class CommunityNotifier extends _$CommunityNotifier {
         videoUrl: uploadedVideoUrl,
       );
 
+      // ✅ FIXED: Wait a bit for Socket.IO event, then force refresh from backend
+      await Future.delayed(const Duration(milliseconds: 500));
       await refresh();
     } catch (e, st) {
       log.e('❌ addPost failed: $e', stackTrace: st);

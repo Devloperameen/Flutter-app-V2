@@ -19,8 +19,10 @@ const getPosts = async (req, res, next) => {
     // Map to flutter structure
     const mappedPosts = posts.map(post => {
       const p = post.toJSON();
-      p.likeCount = post.likeCount;
+      // Ensure likeCount is properly included (in case toJSON doesn't include virtuals)
+      p.likeCount = post.likeCount || post.likes?.length || 0;
       p.isLikedByMe = post.checkIsLikedBy(req.user.id);
+      p.commentCount = post.commentCount || 0;
       return p;
     });
 

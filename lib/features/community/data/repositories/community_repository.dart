@@ -74,12 +74,24 @@ class CommunityRepository {
     String? videoUrl,
   }) async {
     try {
-      log.i('💬 Sending message');
-      // The backend will generate a real ID; we return a temporary one for UI optimism.
-      return DateTime.now().millisecondsSinceEpoch.toString();
+      log.i('💬 Sending message: "$message"');
+      
+      // ✅ FIXED: socket.emit returns void, don't await
+      socket.emit('chat:message', {
+        'userId': userId,
+        'userName': userName,
+        'content': message,
+        'imageUrl': imageUrl,
+        'videoUrl': videoUrl,
+      });
+      
+      final messageId = DateTime.now().millisecondsSinceEpoch.toString();
+      log.i('✅ Message sent with ID: $messageId');
+      
+      return messageId;
     } catch (e, stackTrace) {
       log.e('❌ Failed to send message: $e', stackTrace: stackTrace);
-      throw ServerFailure(message: 'Failed to send message', stackTrace: stackTrace);
+      throw ServerFailure(message: 'Failed to send message: $e', stackTrace: stackTrace);
     }
   }
 
@@ -142,7 +154,14 @@ class CommunityRepository {
   Future<void> addComment({required String postId, required String userId, required String userName, required String comment}) async {
     try {
       log.i('💬 Adding comment to post: $postId');
-      // TODO: implement when backend supports comments.
+      // Emit comment event via Socket.IO
+      socket.emit('post:comment', {
+        'postId': postId,
+        'userId': userId,
+        'userName': userName,
+        'content': comment,
+      });
+      log.i('✅ Comment added');
     } catch (e, stackTrace) {
       log.e('❌ Failed to add comment: $e', stackTrace: stackTrace);
       throw ServerFailure(message: 'Failed to add comment', stackTrace: stackTrace);

@@ -177,10 +177,10 @@ class LeaderboardUser {
   final String? avatar;
 }
 
-/// User rank information
-class UserRank {
+/// User rank information - USE user_rank.dart instead (freezed version)
+class UserRankLegacy {
 
-  UserRank({
+  UserRankLegacy({
     required this.rank,
     required this.totalUsers,
     required this.percentile,
@@ -188,8 +188,8 @@ class UserRank {
     required this.totalXP,
   });
 
-  factory UserRank.fromJson(Map<String, dynamic> json) {
-    return UserRank(
+  factory UserRankLegacy.fromJson(Map<String, dynamic> json) {
+    return UserRankLegacy(
       rank: json['rank'] as int,
       totalUsers: json['totalUsers'] as int,
       percentile: json['percentile'] as int,

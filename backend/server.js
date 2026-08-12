@@ -189,19 +189,43 @@ app.get('/health', (req, res) => {
 
 const apiV1 = '/api/v1';
 
-app.use(`${apiV1}/auth`, authRoutes);
-app.use(`${apiV1}/habits`, habitRoutes);
-app.use(`${apiV1}/users`, userRoutes);
-app.use(`${apiV1}/community`, communityRoutes);
-app.use(`${apiV1}/uploads`, uploadRoutes);
-app.use(`${apiV1}/focus`, focusRoutes);
-app.use(`${apiV1}/analytics`, analyticsRoutes);
-app.use(`${apiV1}/activity`, activityRoutes);
-app.use(`${apiV1}/content`, contentRoutes);
-app.use(`${apiV1}/admin`, adminRoutes);
-app.use(`${apiV1}/dashboard`, dashboardRoutes);
+// Register all routes
+logger.info('📍 Registering routes...');
 
-logger.info('✅ All routes registered');
+app.use(`${apiV1}/auth`, authRoutes);
+logger.info(`✅ /api/v1/auth registered`);
+
+app.use(`${apiV1}/habits`, habitRoutes);
+logger.info(`✅ /api/v1/habits registered`);
+
+app.use(`${apiV1}/users`, userRoutes);
+logger.info(`✅ /api/v1/users registered`);
+
+app.use(`${apiV1}/community`, communityRoutes);
+logger.info(`✅ /api/v1/community registered (includes /posts)`);
+
+app.use(`${apiV1}/uploads`, uploadRoutes);
+logger.info(`✅ /api/v1/uploads registered`);
+
+app.use(`${apiV1}/focus`, focusRoutes);
+logger.info(`✅ /api/v1/focus registered`);
+
+app.use(`${apiV1}/analytics`, analyticsRoutes);
+logger.info(`✅ /api/v1/analytics registered (includes /my-rank)`);
+
+app.use(`${apiV1}/activity`, activityRoutes);
+logger.info(`✅ /api/v1/activity registered`);
+
+app.use(`${apiV1}/content`, contentRoutes);
+logger.info(`✅ /api/v1/content registered`);
+
+app.use(`${apiV1}/admin`, adminRoutes);
+logger.info(`✅ /api/v1/admin registered`);
+
+app.use(`${apiV1}/dashboard`, dashboardRoutes);
+logger.info(`✅ /api/v1/dashboard registered`);
+
+logger.info('✅ All routes registered successfully');
 
 /**
  * ─────────────────────────────────────────────────

@@ -25,23 +25,49 @@ const authenticate = async (req, res, next) => {
     // 1. Extract token from header
     const authHeader = req.headers.authorization;
     
+    logger.debug(`🔐 Auth request to: ${req.method} ${req.path}`);
+    logger.debug(`Auth header present: ${!!authHeader}`);
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      logger.warn(`❌ No Bearer token in ${req.path}`);
       return res.status(401).json({
         success: false,
-        message: 'No authorization token provided',
+        message: 'No authorization token provided. Use "Bearer TOKEN" format.',
         statusCode: 401,
       });
     }
 
     // 2. Extract token value (remove 'Bearer ' prefix)
     const token = authHeader.substring(7);
+    logger.debug(`Token received (first 20 chars): ${token.substring(0, 20)}...`);
 
     // 3. Verify token signature and expiry
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      logger.debug(`✅ Token verified successfully`);
+    } catch (jwtError) {
+      logger.error(`❌ JWT verification failed:`, jwtError.message);
+      if (jwtError.name === 'TokenExpiredError') {
+        return res.status(401).json({
+          success: false,
+          message: 'Token has expired',
+          statusCode: 401,
+        });
+      }
+      if (jwtError.name === 'JsonWebTokenError') {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid token',
+          statusCode: 401,
+        });
+      }
+      throw jwtError;
+    }
     
     // 4. Check if token is valid (not blacklisted, etc.)
-    // In production, check against a token blacklist if needed
     if (!decoded.userId) {
+      logger.warn(`❌ Token missing userId field`);
       return res.status(401).json({
         success: false,
         message: 'Invalid token structure',
@@ -53,6 +79,7 @@ const authenticate = async (req, res, next) => {
     const user = await User.findById(decoded.userId).select('-password');
     
     if (!user) {
+      logger.warn(`❌ User not found with ID: ${decoded.userId}`);
       return res.status(401).json({
         success: false,
         message: 'User not found',
@@ -62,6 +89,7 @@ const authenticate = async (req, res, next) => {
 
     // 6. Check if user is active
     if (!user.isActive) {
+      logger.warn(`❌ User account disabled: ${user.email}`);
       return res.status(403).json({
         success: false,
         message: 'User account is disabled',
@@ -76,33 +104,17 @@ const authenticate = async (req, res, next) => {
       fullName: user.fullName,
     };
 
-    logger.debug(`User authenticated: ${req.user.email}`);
+    logger.debug(`✅ User authenticated: ${req.user.email} → ${req.method} ${req.path}`);
 
     // 8. Continue to next middleware/controller
     next();
   } catch (error) {
-    // Handle specific JWT errors
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Token has expired',
-        statusCode: 401,
-      });
-    }
-
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token',
-        statusCode: 401,
-      });
-    }
-
-    logger.error('Authentication error:', error);
+    logger.error('❌ Authentication middleware error:', error.message);
     
     res.status(500).json({
       success: false,
       message: 'Authentication failed',
+      error: error.message,
       statusCode: 500,
     });
   }

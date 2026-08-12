@@ -29,6 +29,16 @@ mixin _$User {
   String get role =>
       throw _privateConstructorUsedError; // ✅ FIXED: Added role field ('user', 'admin', 'super_admin')
   bool get isEmailVerified => throw _privateConstructorUsedError;
+  int get level =>
+      throw _privateConstructorUsedError; // ✅ FIXED: Added level field (user level/rank)
+  int get xp =>
+      throw _privateConstructorUsedError; // ✅ FIXED: Added xp field (experience points)
+  int get rank =>
+      throw _privateConstructorUsedError; // ✅ FIXED: Added rank field (leaderboard rank)
+  int get totalFocusHours =>
+      throw _privateConstructorUsedError; // ✅ FIXED: Added totalFocusHours field
+  int get streakDays =>
+      throw _privateConstructorUsedError; // ✅ FIXED: Added streakDays field (activity streak)
   DateTime get createdAt => throw _privateConstructorUsedError;
 
   /// Serializes this User to a JSON map.
@@ -53,6 +63,11 @@ abstract class $UserCopyWith<$Res> {
     String? avatarUrl,
     String role,
     bool isEmailVerified,
+    int level,
+    int xp,
+    int rank,
+    int totalFocusHours,
+    int streakDays,
     DateTime createdAt,
   });
 }
@@ -79,6 +94,11 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? avatarUrl = freezed,
     Object? role = null,
     Object? isEmailVerified = null,
+    Object? level = null,
+    Object? xp = null,
+    Object? rank = null,
+    Object? totalFocusHours = null,
+    Object? streakDays = null,
     Object? createdAt = null,
   }) {
     return _then(
@@ -111,6 +131,26 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
                 ? _value.isEmailVerified
                 : isEmailVerified // ignore: cast_nullable_to_non_nullable
                       as bool,
+            level: null == level
+                ? _value.level
+                : level // ignore: cast_nullable_to_non_nullable
+                      as int,
+            xp: null == xp
+                ? _value.xp
+                : xp // ignore: cast_nullable_to_non_nullable
+                      as int,
+            rank: null == rank
+                ? _value.rank
+                : rank // ignore: cast_nullable_to_non_nullable
+                      as int,
+            totalFocusHours: null == totalFocusHours
+                ? _value.totalFocusHours
+                : totalFocusHours // ignore: cast_nullable_to_non_nullable
+                      as int,
+            streakDays: null == streakDays
+                ? _value.streakDays
+                : streakDays // ignore: cast_nullable_to_non_nullable
+                      as int,
             createdAt: null == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
@@ -137,6 +177,11 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
     String? avatarUrl,
     String role,
     bool isEmailVerified,
+    int level,
+    int xp,
+    int rank,
+    int totalFocusHours,
+    int streakDays,
     DateTime createdAt,
   });
 }
@@ -160,6 +205,11 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? avatarUrl = freezed,
     Object? role = null,
     Object? isEmailVerified = null,
+    Object? level = null,
+    Object? xp = null,
+    Object? rank = null,
+    Object? totalFocusHours = null,
+    Object? streakDays = null,
     Object? createdAt = null,
   }) {
     return _then(
@@ -192,6 +242,26 @@ class __$$UserImplCopyWithImpl<$Res>
             ? _value.isEmailVerified
             : isEmailVerified // ignore: cast_nullable_to_non_nullable
                   as bool,
+        level: null == level
+            ? _value.level
+            : level // ignore: cast_nullable_to_non_nullable
+                  as int,
+        xp: null == xp
+            ? _value.xp
+            : xp // ignore: cast_nullable_to_non_nullable
+                  as int,
+        rank: null == rank
+            ? _value.rank
+            : rank // ignore: cast_nullable_to_non_nullable
+                  as int,
+        totalFocusHours: null == totalFocusHours
+            ? _value.totalFocusHours
+            : totalFocusHours // ignore: cast_nullable_to_non_nullable
+                  as int,
+        streakDays: null == streakDays
+            ? _value.streakDays
+            : streakDays // ignore: cast_nullable_to_non_nullable
+                  as int,
         createdAt: null == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -212,6 +282,11 @@ class _$UserImpl implements _User {
     this.avatarUrl,
     this.role = 'user',
     this.isEmailVerified = false,
+    this.level = 1,
+    this.xp = 0,
+    this.rank = 0,
+    this.totalFocusHours = 0,
+    this.streakDays = 0,
     required this.createdAt,
   });
 
@@ -236,11 +311,31 @@ class _$UserImpl implements _User {
   @JsonKey()
   final bool isEmailVerified;
   @override
+  @JsonKey()
+  final int level;
+  // ✅ FIXED: Added level field (user level/rank)
+  @override
+  @JsonKey()
+  final int xp;
+  // ✅ FIXED: Added xp field (experience points)
+  @override
+  @JsonKey()
+  final int rank;
+  // ✅ FIXED: Added rank field (leaderboard rank)
+  @override
+  @JsonKey()
+  final int totalFocusHours;
+  // ✅ FIXED: Added totalFocusHours field
+  @override
+  @JsonKey()
+  final int streakDays;
+  // ✅ FIXED: Added streakDays field (activity streak)
+  @override
   final DateTime createdAt;
 
   @override
   String toString() {
-    return 'User(id: $id, email: $email, firstName: $firstName, lastName: $lastName, avatarUrl: $avatarUrl, role: $role, isEmailVerified: $isEmailVerified, createdAt: $createdAt)';
+    return 'User(id: $id, email: $email, firstName: $firstName, lastName: $lastName, avatarUrl: $avatarUrl, role: $role, isEmailVerified: $isEmailVerified, level: $level, xp: $xp, rank: $rank, totalFocusHours: $totalFocusHours, streakDays: $streakDays, createdAt: $createdAt)';
   }
 
   @override
@@ -259,6 +354,13 @@ class _$UserImpl implements _User {
             (identical(other.role, role) || other.role == role) &&
             (identical(other.isEmailVerified, isEmailVerified) ||
                 other.isEmailVerified == isEmailVerified) &&
+            (identical(other.level, level) || other.level == level) &&
+            (identical(other.xp, xp) || other.xp == xp) &&
+            (identical(other.rank, rank) || other.rank == rank) &&
+            (identical(other.totalFocusHours, totalFocusHours) ||
+                other.totalFocusHours == totalFocusHours) &&
+            (identical(other.streakDays, streakDays) ||
+                other.streakDays == streakDays) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
   }
@@ -274,6 +376,11 @@ class _$UserImpl implements _User {
     avatarUrl,
     role,
     isEmailVerified,
+    level,
+    xp,
+    rank,
+    totalFocusHours,
+    streakDays,
     createdAt,
   );
 
@@ -300,6 +407,11 @@ abstract class _User implements User {
     final String? avatarUrl,
     final String role,
     final bool isEmailVerified,
+    final int level,
+    final int xp,
+    final int rank,
+    final int totalFocusHours,
+    final int streakDays,
     required final DateTime createdAt,
   }) = _$UserImpl;
 
@@ -319,6 +431,16 @@ abstract class _User implements User {
   String get role; // ✅ FIXED: Added role field ('user', 'admin', 'super_admin')
   @override
   bool get isEmailVerified;
+  @override
+  int get level; // ✅ FIXED: Added level field (user level/rank)
+  @override
+  int get xp; // ✅ FIXED: Added xp field (experience points)
+  @override
+  int get rank; // ✅ FIXED: Added rank field (leaderboard rank)
+  @override
+  int get totalFocusHours; // ✅ FIXED: Added totalFocusHours field
+  @override
+  int get streakDays; // ✅ FIXED: Added streakDays field (activity streak)
   @override
   DateTime get createdAt;
 
