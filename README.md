@@ -331,7 +331,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 👨‍💻 Developer
 
-**Sadiq Ahmed**  
+**Sadiq Ferej**  
 Mindset Coach & App Developer  
 Transforming young minds through technology
 
