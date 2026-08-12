@@ -7,7 +7,7 @@ import 'package:safe/features/content/presentation/providers/content_providers.d
 /// Quote Screen
 /// Displays motivational quotes with random refresh
 class QuoteScreen extends ConsumerWidget {
-  const QuoteScreen({Key? key}) : super(key: key);
+  const QuoteScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,7 +36,7 @@ class QuoteScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                '✨ Today\'s Quote',
+                "✨ Today's Quote",
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -174,13 +174,13 @@ class QuoteScreen extends ConsumerWidget {
           color: isFeatured ? null : Colors.grey[100],
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isFeatured ? Colors.blue.withOpacity(0.3) : Colors.grey[300]!,
+            color: isFeatured ? Colors.blue.withValues(alpha: 0.3) : Colors.grey[300]!,
             width: isFeatured ? 2 : 1,
           ),
           boxShadow: isFeatured
               ? [
                   BoxShadow(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -194,7 +194,7 @@ class QuoteScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -243,9 +243,9 @@ class QuoteScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
               ),
               child: Text(
                 quote.category.toUpperCase(),

@@ -9,21 +9,22 @@
 /// - HTTP requests to backend API
 /// - JSON serialization/deserialization
 /// - Error handling & logging
+library;
 
 import 'package:dio/dio.dart';
 import 'package:safe/core/network/api_client.dart';
 import 'package:safe/core/network/api_endpoints.dart';
 import 'package:safe/core/utils/app_logger.dart';
-import 'package:safe/features/habits/domain/models/habit.dart';
 import 'package:safe/features/habits/data/datasources/habit_datasource_interface.dart';
+import 'package:safe/features/habits/domain/models/habit.dart';
 
 /// HTTP-based implementation of habit datasource
 /// Uses Express.js backend with MongoDB
 class HttpHabitDatasource implements IHabitDatasource {
-  /// Dependency: API client (Dio HTTP client)
-  final ApiClient apiClient;
 
   HttpHabitDatasource({required this.apiClient});
+  /// Dependency: API client (Dio HTTP client)
+  final ApiClient apiClient;
 
   /// Get all habits for user as stream
   /// 
@@ -70,6 +71,10 @@ class HttpHabitDatasource implements IHabitDatasource {
 
       // Extract habit from 'data' field in response
       final habitData = response['data'] as Map<String, dynamic>;
+      if (habitData.containsKey('_id') && !habitData.containsKey('id')) {
+        habitData['id'] = habitData['_id'];
+      }
+      _sanitizeHabitData(habitData);
       final habit = Habit.fromJson(habitData);
 
       log.i('✅ Habit fetched: ${habit.title}');
@@ -85,12 +90,15 @@ class HttpHabitDatasource implements IHabitDatasource {
 
   /// Create a new habit
   @override
+  @override
   Future<Habit> createHabit(String userId, Habit habit) async {
     try {
       log.i('➕ Creating habit: ${habit.title}');
 
       // Convert habit to JSON for API
       final habitJson = habit.toJson();
+      
+      log.d('Sending habit data: ${habitJson.toString()}');
 
       // Make POST request to backend
       final response = await apiClient.post(
@@ -100,6 +108,13 @@ class HttpHabitDatasource implements IHabitDatasource {
 
       // Parse response
       final habitData = response['data'] as Map<String, dynamic>;
+      if (habitData.containsKey('_id') && !habitData.containsKey('id')) {
+        habitData['id'] = habitData['_id'];
+      }
+      
+      // Sanitize data before parsing
+      _sanitizeHabitData(habitData);
+      
       final createdHabit = Habit.fromJson(habitData);
 
       log.i('✅ Habit created: ${createdHabit.title}');
@@ -149,6 +164,13 @@ class HttpHabitDatasource implements IHabitDatasource {
 
       // Parse updated habit from response
       final habitData = response['data'] as Map<String, dynamic>;
+      
+      // Debug: Log the exact response data
+      log.d('Habit response: ${habitData.toString()}');
+      
+      // Sanitize data: ensure all required fields have proper types
+      _sanitizeHabitData(habitData);
+      
       final habit = Habit.fromJson(habitData);
 
       log.i('✅ Habit marked complete - Streak: ${habit.currentStreak}');
@@ -159,6 +181,44 @@ class HttpHabitDatasource implements IHabitDatasource {
     } catch (e) {
       log.e('❌ Error marking habit complete: $e');
       rethrow;
+    }
+  }
+
+  /// Sanitize habit data from backend response
+  void _sanitizeHabitData(Map<String, dynamic> data) {
+    // Ensure required String fields are not null
+    if (data['id'] == null) data['id'] = '';
+    if (data['title'] == null) data['title'] = 'Untitled Habit';
+    if (data['emoji'] == null) data['emoji'] = '✨';
+    if (data['color'] == null) data['color'] = '#FF6B6B';
+    if (data['category'] == null) data['category'] = 'other';
+    
+    // Ensure numeric fields are numbers
+    if (data['targetMinutes'] != null && data['targetMinutes'] is! num) {
+      data['targetMinutes'] = int.tryParse(data['targetMinutes'].toString()) ?? 0;
+    }
+    if (data['currentStreak'] != null && data['currentStreak'] is! num) {
+      data['currentStreak'] = int.tryParse(data['currentStreak'].toString()) ?? 0;
+    }
+    if (data['longestStreak'] != null && data['longestStreak'] is! num) {
+      data['longestStreak'] = int.tryParse(data['longestStreak'].toString()) ?? 0;
+    }
+    if (data['totalCompletions'] != null && data['totalCompletions'] is! num) {
+      data['totalCompletions'] = int.tryParse(data['totalCompletions'].toString()) ?? 0;
+    }
+    if (data['order'] != null && data['order'] is! num) {
+      data['order'] = int.tryParse(data['order'].toString()) ?? 0;
+    }
+    
+    // Ensure boolean fields are booleans
+    if (data['reminderEnabled'] != null && data['reminderEnabled'] is! bool) {
+      data['reminderEnabled'] = data['reminderEnabled'].toString().toLowerCase() == 'true';
+    }
+    if (data['completedToday'] != null && data['completedToday'] is! bool) {
+      data['completedToday'] = data['completedToday'].toString().toLowerCase() == 'true';
+    }
+    if (data['archived'] != null && data['archived'] is! bool) {
+      data['archived'] = data['archived'].toString().toLowerCase() == 'true';
     }
   }
 
@@ -175,6 +235,13 @@ class HttpHabitDatasource implements IHabitDatasource {
 
       // Parse updated habit from response
       final habitData = response['data'] as Map<String, dynamic>;
+      
+      // Debug: Log the exact response data
+      log.d('Undo habit response: ${habitData.toString()}');
+      
+      // Sanitize data
+      _sanitizeHabitData(habitData);
+      
       final habit = Habit.fromJson(habitData);
 
       log.i('✅ Habit completion undone - Streak: ${habit.currentStreak}');
@@ -336,9 +403,14 @@ class HttpHabitDatasource implements IHabitDatasource {
       // Handle different response formats
       final dataList = response['data'] as List;
       
-      return dataList
-          .map((item) => Habit.fromJson(item as Map<String, dynamic>))
-          .toList();
+      return dataList.map((item) {
+        final map = Map<String, dynamic>.from(item as Map);
+        if (map.containsKey('_id') && !map.containsKey('id')) {
+          map['id'] = map['_id'];
+        }
+        _sanitizeHabitData(map);
+        return Habit.fromJson(map);
+      }).toList();
     } catch (e) {
       log.e('Error parsing habits response: $e');
       return [];

@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:safe/features/habits/domain/models/habit.dart';
-import 'package:safe/features/habits/data/repositories/habit_repository.dart';
-import 'package:safe/features/auth/data/repositories/auth_repository.dart';
 import 'package:safe/core/utils/app_logger.dart';
+import 'package:safe/features/auth/data/repositories/auth_repository.dart';
+import 'package:safe/features/habits/data/repositories/habit_repository.dart';
+import 'package:safe/features/habits/domain/models/habit.dart';
 
 part 'habits_stream_provider.g.dart';
 
@@ -39,7 +39,7 @@ int totalCurrentStreak(TotalCurrentStreakRef ref) {
   return habitsAsync.when(
     data: (habits) => habits.fold(0, (sum, h) => sum + h.currentStreak),
     loading: () => 0,
-    error: (_, __) => 0,
+    error: (_, _) => 0,
   );
 }
 
@@ -50,7 +50,7 @@ int totalLongestStreak(TotalLongestStreakRef ref) {
   return habitsAsync.when(
     data: (habits) => habits.fold(0, (sum, h) => sum + h.longestStreak),
     loading: () => 0,
-    error: (_, __) => 0,
+    error: (_, _) => 0,
   );
 }
 
@@ -61,7 +61,7 @@ List<Habit> completedHabitsToday(CompletedHabitsTodayRef ref) {
   return habitsAsync.when(
     data: (habits) => habits.where((h) => h.completedToday).toList(),
     loading: () => [],
-    error: (_, __) => [],
+    error: (_, _) => [],
   );
 }
 
@@ -73,7 +73,7 @@ List<Habit> pendingHabitsToday(PendingHabitsTodayRef ref) {
     data: (habits) =>
         habits.where((h) => !h.completedToday && !h.archived).toList(),
     loading: () => [],
-    error: (_, __) => [],
+    error: (_, _) => [],
   );
 }
 
@@ -84,7 +84,7 @@ List<Habit> activeHabits(ActiveHabitsRef ref) {
   return habitsAsync.when(
     data: (habits) => habits.where((h) => !h.archived).toList(),
     loading: () => [],
-    error: (_, __) => [],
+    error: (_, _) => [],
   );
 }
 
@@ -95,6 +95,6 @@ List<Habit> archivedHabits(ArchivedHabitsRef ref) {
   return habitsAsync.when(
     data: (habits) => habits.where((h) => h.archived).toList(),
     loading: () => [],
-    error: (_, __) => [],
+    error: (_, _) => [],
   );
 }

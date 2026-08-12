@@ -6,9 +6,6 @@ import 'package:safe/features/dashboard/presentation/screens/video_player_screen
 
 /// Video carousel widget showing horizontal scrolling video cards
 class VideoCarousel extends StatelessWidget {
-  final List<VideoContent> videos;
-  final String title;
-  final VoidCallback? onSeeAll;
 
   const VideoCarousel({
     super.key,
@@ -16,6 +13,9 @@ class VideoCarousel extends StatelessWidget {
     required this.title,
     this.onSeeAll,
   });
+  final List<VideoContent> videos;
+  final String title;
+  final VoidCallback? onSeeAll;
 
   @override
   Widget build(BuildContext context) {
@@ -76,9 +76,9 @@ class VideoCarousel extends StatelessWidget {
 }
 
 class _VideoCard extends StatelessWidget {
-  final VideoContent video;
 
   const _VideoCard({required this.video});
+  final VideoContent video;
 
   @override
   Widget build(BuildContext context) {
@@ -124,14 +124,14 @@ class _VideoCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       loadingBuilder: (context, child, progress) {
                         if (progress == null) return child;
-                        return Container(
+                        return ColoredBox(
                           color: theme.colorScheme.surfaceContainerHighest,
                           child: const Center(
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         );
                       },
-                      errorBuilder: (context, error, stackTrace) => Container(
+                      errorBuilder: (context, error, stackTrace) => DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,

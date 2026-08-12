@@ -1,21 +1,16 @@
 import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:safe/core/providers/core_providers.dart';
 import 'package:safe/core/utils/app_logger.dart';
 import 'package:safe/features/auth/data/repositories/auth_repository.dart';
 import 'package:safe/features/focus_timer/data/datasources/http_focus_timer_datasource.dart';
 import 'package:safe/features/focus_timer/domain/models/focus_session.dart';
 import 'package:safe/features/focus_timer/domain/models/timer_config.dart';
-import 'package:safe/core/providers/core_providers.dart';
 
 part 'focus_timer_provider.g.dart';
 
 class TimerState {
-  final int secondsRemaining;
-  final int totalSeconds;
-  final bool isRunning;
-  final bool isPaused;
-  final String currentPhase;
-  final int cycleCount;
 
   const TimerState({
     required this.secondsRemaining,
@@ -25,6 +20,12 @@ class TimerState {
     required this.currentPhase,
     required this.cycleCount,
   });
+  final int secondsRemaining;
+  final int totalSeconds;
+  final bool isRunning;
+  final bool isPaused;
+  final String currentPhase;
+  final int cycleCount;
 
   TimerState copyWith({
     int? secondsRemaining,
@@ -62,7 +63,7 @@ class FocusTimerNotifier extends _$FocusTimerNotifier {
   late HttpFocusTimerDatasource _datasource;
   late AuthRepository _authRepository;
   Timer? _timer;
-  int _secondsRemaining = 1500;
+  DateTime? _sessionEndTime;
   int _totalSeconds = 1500;
   bool _isRunning = false;
   String _currentSessionId = '';
@@ -81,6 +82,9 @@ class FocusTimerNotifier extends _$FocusTimerNotifier {
         throw Exception('User not authenticated');
       }
 
+      // Cancel any existing timer
+      _timer?.cancel();
+
       // Use provided config or default to deep work
       _currentConfig = config ?? TimerConfig.presets[0];
 
@@ -96,11 +100,12 @@ class FocusTimerNotifier extends _$FocusTimerNotifier {
 
       _currentSessionId = session.id;
       _totalSeconds = _currentConfig.durationSeconds;
-      _secondsRemaining = _currentConfig.durationSeconds;
       _isRunning = true;
+      // Set end time: now + duration
+      _sessionEndTime = DateTime.now().add(Duration(seconds: _currentConfig.durationSeconds));
 
       state = AsyncValue.data(TimerState(
-        secondsRemaining: _secondsRemaining,
+        secondsRemaining: _currentConfig.durationSeconds,
         totalSeconds: _totalSeconds,
         isRunning: true,
         isPaused: false,
@@ -161,7 +166,7 @@ class FocusTimerNotifier extends _$FocusTimerNotifier {
 
       final userId = _authRepository.getCurrentUserId();
       if (userId != null && userId.isNotEmpty && _currentSessionId.isNotEmpty) {
-        final completedSeconds = _totalSeconds - _secondsRemaining;
+        final completedSeconds = _totalSeconds - (state.value?.secondsRemaining ?? 0);
         // Use actual XP reward from the timer config
         await _datasource.completeFocusSession(
           userId,
@@ -181,6 +186,7 @@ class FocusTimerNotifier extends _$FocusTimerNotifier {
       ));
 
       _currentSessionId = '';
+      _sessionEndTime = null;
       log.i('✅ Session completed with ${_currentConfig.xpReward} XP');
     } catch (e, st) {
       log.e('❌ Stop failed: $e', stackTrace: st);
@@ -189,23 +195,51 @@ class FocusTimerNotifier extends _$FocusTimerNotifier {
   }
 
   void _startTimer() {
+    // Cancel existing timer first
+    _timer?.cancel();
+    
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_secondsRemaining > 0 && _isRunning) {
-        _secondsRemaining--;
+      if (!_isRunning) return;
+      
+      if (_sessionEndTime == null) {
+        timer.cancel();
+        return;
+      }
 
+      final now = DateTime.now();
+      final remaining = _sessionEndTime!.difference(now);
+      
+      // Convert to seconds
+      int secondsRemaining = remaining.inSeconds;
+
+      // If time's up or negative, complete the session
+      if (secondsRemaining <= 0) {
+        timer.cancel();
+        _isRunning = false;
+        
         state = AsyncValue.data(TimerState(
-          secondsRemaining: _secondsRemaining,
+          secondsRemaining: 0,
           totalSeconds: _totalSeconds,
-          isRunning: _isRunning,
+          isRunning: false,
           isPaused: false,
           currentPhase: 'focus',
           cycleCount: 0,
         ));
-
-        if (_secondsRemaining == 0) {
-          stopFocusSession();
-        }
+        
+        // Complete the session (fires once)
+        stopFocusSession();
+        return;
       }
+
+      // Update state with remaining time
+      state = AsyncValue.data(TimerState(
+        secondsRemaining: secondsRemaining,
+        totalSeconds: _totalSeconds,
+        isRunning: _isRunning,
+        isPaused: false,
+        currentPhase: 'focus',
+        cycleCount: 0,
+      ));
     });
   }
 }

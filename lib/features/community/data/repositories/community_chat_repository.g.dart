@@ -7,7 +7,7 @@ part of 'community_chat_repository.dart';
 // **************************************************************************
 
 String _$communityChatRepositoryHash() =>
-    r'95931d56e0fc7e9e25884a1e6a0b8ec0c950269b';
+    r'93987aba4b93dc546923366f5753d87e6cbdaa40';
 
 /// See also [communityChatRepository].
 @ProviderFor(communityChatRepository)

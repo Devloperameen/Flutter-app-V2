@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:safe/core/design/design.dart';
 import 'package:safe/features/community/presentation/screens/community_chat_screen.dart';
 import 'package:safe/features/community/presentation/screens/community_posts_screen.dart';
 

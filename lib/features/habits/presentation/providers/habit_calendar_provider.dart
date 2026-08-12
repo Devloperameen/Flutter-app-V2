@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:safe/features/habits/data/repositories/habit_repository.dart';
-import 'package:safe/features/auth/data/repositories/auth_repository.dart';
 import 'package:safe/core/utils/app_logger.dart';
+import 'package:safe/features/auth/data/repositories/auth_repository.dart';
+import 'package:safe/features/habits/data/repositories/habit_repository.dart';
 
 part 'habit_calendar_provider.g.dart';
 

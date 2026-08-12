@@ -29,6 +29,6 @@ class DashboardNotifier extends _$DashboardNotifier {
   Future<void> refresh() async {
     log.i('🔄 Dashboard refresh triggered');
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _fetchDashboardData());
+    state = await AsyncValue.guard(_fetchDashboardData);
   }
 }

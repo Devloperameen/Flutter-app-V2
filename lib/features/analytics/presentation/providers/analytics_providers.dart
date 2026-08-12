@@ -1,5 +1,4 @@
 import 'package:riverpod/riverpod.dart';
-import 'package:safe/core/network/api_client.dart';
 import 'package:safe/core/providers/core_providers.dart';
 import 'package:safe/features/analytics/data/repositories/analytics_repository.dart';
 import 'package:safe/features/analytics/domain/models/analytics_models.dart';

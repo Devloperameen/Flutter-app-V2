@@ -34,12 +34,12 @@ class SecureStorageService {
 
   /// Read a sensitive value (encrypted storage)
   Future<String?> readSecure(String key) async {
-    return await _secureStorage.read(key: key);
+    return _secureStorage.read(key: key);
   }
 
   /// Read a value (for backward compatibility)
   Future<String?> read(String key) async {
-    return await readSecure(key);
+    return readSecure(key);
   }
 
   /// Delete a single key from secure storage
@@ -49,7 +49,7 @@ class SecureStorageService {
 
   /// Check if a key exists in secure storage
   Future<bool> containsKey(String key) async {
-    return await _secureStorage.containsKey(key: key);
+    return _secureStorage.containsKey(key: key);
   }
 
   /// Wipe all secure storage (used on logout)
@@ -59,6 +59,6 @@ class SecureStorageService {
 
   /// Get all secure storage keys (for debugging - use carefully)
   Future<Map<String, String>> readAll() async {
-    return await _secureStorage.readAll();
+    return _secureStorage.readAll();
   }
 }

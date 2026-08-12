@@ -68,7 +68,10 @@ const validateHabit = (habitData) => {
     errors.push('Habit title must be less than 100 characters');
   }
 
-  const validCategories = ['mindfulness', 'fitness', 'learning', 'health', 'productivity', 'creativity', 'social', 'entertainment', 'other'];
+  const validCategories = [
+    'mindfulness', 'fitness', 'learning', 'health', 
+    'productivity', 'creativity', 'social', 'entertainment', 'other'
+  ];
   if (category && !validCategories.includes(category)) {
     errors.push(`Category must be one of: ${validCategories.join(', ')}`);
   }

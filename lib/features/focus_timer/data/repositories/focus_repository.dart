@@ -152,7 +152,7 @@ class FocusRepository {
   /// Returns: Object containing totalSessions, completedSessions, totalMinutes, totalXP
   Future<Map<String, dynamic>> getDailyStats() async {
     try {
-      log.i('Fetching today\'s focus statistics');
+      log.i("Fetching today's focus statistics");
       
       final response = await _apiClient.get(ApiEndpoints.focusDailyStats);
       
@@ -184,7 +184,7 @@ class FocusRepository {
   /// Returns: Object with weekly stats including daily breakdown
   Future<Map<String, dynamic>> getWeeklyStats() async {
     try {
-      log.i('Fetching this week\'s focus statistics');
+      log.i("Fetching this week's focus statistics");
       
       final response = await _apiClient.get(ApiEndpoints.focusWeeklyStats);
       

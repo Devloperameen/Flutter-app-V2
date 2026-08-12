@@ -24,6 +24,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const http = require('http');
+const socketIo = require('socket.io');
 require('express-async-errors');
 
 // ─── Project Dependencies ───────────────────────────
@@ -48,12 +50,75 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const ENV = process.env.NODE_ENV || 'development';
 
+// ─── Create HTTP Server with Socket.IO ──────────────
+const httpServer = http.createServer(app);
+const io = socketIo(httpServer, {
+  cors: {
+    origin: function(origin, callback) {
+      if (process.env.NODE_ENV === 'production') {
+        const allowedOrigins = (process.env.CORS_ORIGIN || 'https://flutter-app-v2.onrender.com').split(',').map(o => o.trim());
+        if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      } else {
+        callback(null, true);
+      }
+    },
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+  path: '/socket.io/',
+  transports: ['websocket', 'polling'],
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  reconnectionAttempts: 5,
+});
+
+logger.info('✅ Socket.IO configured with WebSocket support');
+
 // Trust proxy - required for Render deployment with X-Forwarded-For headers
 app.set('trust proxy', 1);
 
 /**
  * ─────────────────────────────────────────────────
- * MIDDLEWARE CONFIGURATION
+ * SOCKET.IO EVENT HANDLERS
+ * ─────────────────────────────────────────────────
+ */
+
+io.on('connection', (socket) => {
+  const userId = socket.handshake.auth?.token || 'anonymous';
+  logger.info(`✅ Socket.IO client connected: ${socket.id} (User: ${userId})`);
+
+  // Handle authentication
+  socket.on('authenticate', (data) => {
+    logger.info(`🔐 Socket.IO authentication: ${socket.id}`);
+  });
+
+  // Handle chat events
+  socket.on('message:new', (data) => {
+    logger.info(`💬 New message from ${socket.id}: ${data.message}`);
+    // Broadcast to all clients
+    io.emit('message:received', data);
+  });
+
+  // Handle disconnect
+  socket.on('disconnect', () => {
+    logger.info(`❌ Socket.IO client disconnected: ${socket.id}`);
+  });
+
+  socket.on('error', (error) => {
+    logger.error(`❌ Socket.IO error for ${socket.id}:`, error);
+  });
+});
+
+logger.info('✅ Socket.IO event handlers registered');
+
+/**
+ * ─────────────────────────────────────────────────
+ * EXPRESS MIDDLEWARE CONFIGURATION
  * ─────────────────────────────────────────────────
  */
 
@@ -166,17 +231,18 @@ const startServer = async () => {
     await connectDB();
     logger.info('✅ Connected to MongoDB');
 
-    // 2. Start Express Server
-    app.listen(PORT, () => {
+    // 2. Start HTTP Server (which includes Express + Socket.IO)
+    httpServer.listen(PORT, () => {
       logger.info(`
-╔════════════════════════════════════════╗
-║   FitFlow Backend Server Started 🚀   ║
-║────────────────────────────────────────║
-║  Environment: ${ENV.padEnd(26)}║
-║  Port: ${PORT.toString().padEnd(33)}║
-║  URL: http://localhost:${PORT.toString().padEnd(28)}║
-║  API: http://localhost:${PORT}/api/v1${' '.padEnd(19)}║
-╚════════════════════════════════════════╝
+╔════════════════════════════════════════════════╗
+║     FitFlow Backend Server Started 🚀         ║
+║────────────────────────────────────────────────║
+║  Environment: ${ENV.padEnd(31)}║
+║  Port: ${PORT.toString().padEnd(38)}║
+║  URL: https://flutter-app-v2.onrender.com${' '.padEnd(8)}║
+║  API: /api/v1${' '.padEnd(39)}║
+║  Socket.IO: /socket.io/ (WebSocket)${' '.padEnd(11)}║
+╚════════════════════════════════════════════════╝
       `);
     });
   } catch (error) {

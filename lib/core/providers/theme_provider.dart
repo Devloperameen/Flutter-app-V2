@@ -41,7 +41,7 @@ class ThemeNotifier extends _$ThemeNotifier {
     
     // Load theme mode (0 = system, 1 = light, 2 = dark)
     final savedMode = storage.getInt(StorageKeys.themeMode);
-    ThemeMode mode = ThemeMode.system;
+    var mode = ThemeMode.system;
     if (savedMode == 1) mode = ThemeMode.light;
     if (savedMode == 2) mode = ThemeMode.dark;
 
@@ -55,7 +55,7 @@ class ThemeNotifier extends _$ThemeNotifier {
   Future<void> setThemeMode(ThemeMode mode) async {
     state = state.copyWith(themeMode: mode);
     
-    int modeInt = 0;
+    var modeInt = 0;
     if (mode == ThemeMode.light) modeInt = 1;
     if (mode == ThemeMode.dark) modeInt = 2;
     

@@ -25,7 +25,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     super.dispose();
   }
 
-  void _submitPost() async {
+  Future<void> _submitPost() async {
     final text = _textController.text.trim();
     if (text.isEmpty && _imageFile == null && _videoFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(

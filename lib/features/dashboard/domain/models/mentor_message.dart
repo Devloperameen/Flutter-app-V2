@@ -44,7 +44,7 @@ class MentorMessage with _$MentorMessage {
     // Morning messages (5 AM - 11 AM)
     if (hour >= 5 && hour < 12) {
       if (streakDays > 7) {
-        return '$userName, you\'re building something incredible. $streakDays days of consistency! Today, let\'s push even further.';
+        return "$userName, you're building something incredible. $streakDays days of consistency! Today, let's push even further.";
       } else if (streakDays > 0) {
         return 'Good morning, $userName! Day $streakDays of your journey. Every morning is a fresh chance to become better.';
       } else {
@@ -57,18 +57,18 @@ class MentorMessage with _$MentorMessage {
       if (completedHabits > 0 && totalHabits > 0) {
         final percentage = (completedHabits / totalHabits * 100).round();
         if (percentage >= 80) {
-          return 'Outstanding, $userName! You\'ve completed $completedHabits/$totalHabits habits today. This is the discipline that builds legends.';
+          return "Outstanding, $userName! You've completed $completedHabits/$totalHabits habits today. This is the discipline that builds legends.";
         } else {
-          return 'You\'re making progress, $userName. $completedHabits/$totalHabits done. Keep the momentum going!';
+          return "You're making progress, $userName. $completedHabits/$totalHabits done. Keep the momentum going!";
         }
       } else {
-        return 'The afternoon is perfect for deep focus work, $userName. Let\'s make this time count.';
+        return "The afternoon is perfect for deep focus work, $userName. Let's make this time count.";
       }
     }
     
     // Evening messages (5 PM - 9 PM)
     if (hour >= 17 && hour < 21) {
-      return 'Evening, $userName. Reflect on today\'s progress and prepare for tomorrow\'s victories. Consistency is everything.';
+      return "Evening, $userName. Reflect on today's progress and prepare for tomorrow's victories. Consistency is everything.";
     }
     
     // Night messages (9 PM - 4 AM)

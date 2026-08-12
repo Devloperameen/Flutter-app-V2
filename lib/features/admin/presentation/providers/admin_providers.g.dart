@@ -27,7 +27,7 @@ final adminStatsProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AdminStatsRef = AutoDisposeFutureProviderRef<Map<String, dynamic>>;
-String _$adminUsersHash() => r'443c46dc52d200154d9eb18d3290e38c77cbc645';
+String _$adminUsersHash() => r'5cafd239a0ea54f5a9c61056ce0ea78608070d84';
 
 /// Admin Users Provider
 /// Fetches all users for user management
@@ -49,7 +49,7 @@ final adminUsersProvider =
 // ignore: unused_element
 typedef AdminUsersRef =
     AutoDisposeFutureProviderRef<List<Map<String, dynamic>>>;
-String _$adminPostsHash() => r'2cfb8c95e4df801deace4cd7ab34eda8e0edb166';
+String _$adminPostsHash() => r'97318b37548e33fe7efad065f0e28b0cea77c816';
 
 /// Admin Posts Provider
 /// Fetches all posts for content moderation

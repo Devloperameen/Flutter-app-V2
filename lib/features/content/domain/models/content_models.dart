@@ -1,12 +1,5 @@
 /// Quote model
 class Quote {
-  final String id;
-  final String text;
-  final String author;
-  final String category; // 'motivation', 'fitness', 'productivity'
-  final int displayCount;
-  final bool isActive;
-  final List<String> tags;
 
   Quote({
     required this.id,
@@ -29,6 +22,13 @@ class Quote {
       tags: List<String>.from(json['tags'] as List<dynamic>? ?? []),
     );
   }
+  final String id;
+  final String text;
+  final String author;
+  final String category; // 'motivation', 'fitness', 'productivity'
+  final int displayCount;
+  final bool isActive;
+  final List<String> tags;
 
   Map<String, dynamic> toJson() {
     return {
@@ -64,15 +64,6 @@ class Quote {
 
 /// Video model
 class Video {
-  final String id;
-  final String title;
-  final String description;
-  final String videoId; // YouTube video ID
-  final String embedUrl; // YouTube embed URL
-  final String category; // 'motivation', 'fitness-training', 'productivity'
-  final int views;
-  final bool isActive;
-  final List<String> tags;
 
   Video({
     required this.id,
@@ -99,6 +90,15 @@ class Video {
       tags: List<String>.from(json['tags'] as List<dynamic>? ?? []),
     );
   }
+  final String id;
+  final String title;
+  final String description;
+  final String videoId; // YouTube video ID
+  final String embedUrl; // YouTube embed URL
+  final String category; // 'motivation', 'fitness-training', 'productivity'
+  final int views;
+  final bool isActive;
+  final List<String> tags;
 
   Map<String, dynamic> toJson() {
     return {
@@ -138,17 +138,6 @@ class Video {
 
 /// Content report model
 class ContentReport {
-  final String id;
-  final String reportedBy;
-  final String targetId;
-  final String targetType; // 'post', 'message', 'user', 'comment'
-  final String reason; // 'harassment', 'spam', 'inappropriate-content'
-  final String description;
-  final String status; // 'pending', 'resolved'
-  final String? action; // 'content-removed', 'user-warned', 'dismissed'
-  final String? notes;
-  final DateTime createdAt;
-  final DateTime? resolvedAt;
 
   ContentReport({
     required this.id,
@@ -163,22 +152,6 @@ class ContentReport {
     required this.createdAt,
     this.resolvedAt,
   });
-
-  bool get isPending => status == 'pending';
-  bool get isResolved => status == 'resolved';
-
-  String get reasonLabel {
-    switch (reason) {
-      case 'harassment':
-        return 'Harassment/Bullying';
-      case 'spam':
-        return 'Spam';
-      case 'inappropriate-content':
-        return 'Inappropriate Content';
-      default:
-        return reason;
-    }
-  }
 
   factory ContentReport.fromJson(Map<String, dynamic> json) {
     return ContentReport(
@@ -196,6 +169,33 @@ class ContentReport {
           ? DateTime.parse(json['resolvedAt'] as String)
           : null,
     );
+  }
+  final String id;
+  final String reportedBy;
+  final String targetId;
+  final String targetType; // 'post', 'message', 'user', 'comment'
+  final String reason; // 'harassment', 'spam', 'inappropriate-content'
+  final String description;
+  final String status; // 'pending', 'resolved'
+  final String? action; // 'content-removed', 'user-warned', 'dismissed'
+  final String? notes;
+  final DateTime createdAt;
+  final DateTime? resolvedAt;
+
+  bool get isPending => status == 'pending';
+  bool get isResolved => status == 'resolved';
+
+  String get reasonLabel {
+    switch (reason) {
+      case 'harassment':
+        return 'Harassment/Bullying';
+      case 'spam':
+        return 'Spam';
+      case 'inappropriate-content':
+        return 'Inappropriate Content';
+      default:
+        return reason;
+    }
   }
 
   Map<String, dynamic> toJson() {

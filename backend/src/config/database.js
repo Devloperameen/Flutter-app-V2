@@ -25,6 +25,18 @@ const connectDB = async () => {
   try {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fitflow';
 
+    // Apply global plugin to transform _id to id and remove __v
+    mongoose.plugin((schema) => {
+      schema.set('toJSON', {
+        virtuals: true,
+        versionKey: false,
+        transform: (doc, ret) => {
+          ret.id = ret._id;
+          delete ret._id;
+        }
+      });
+    });
+
     const connection = await mongoose.connect(mongoURI, {
       // Modern MongoDB driver options
       useNewUrlParser: true,

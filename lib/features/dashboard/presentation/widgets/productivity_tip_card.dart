@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:safe/core/design/design.dart';
 import 'package:safe/features/dashboard/domain/models/productivity_tip.dart';
 
 /// Swipeable productivity tip card that auto-rotates
 class ProductivityTipCard extends StatefulWidget {
-  final List<ProductivityTip> tips;
-  final VoidCallback? onNext;
 
   const ProductivityTipCard({
     super.key,
     required this.tips,
     this.onNext,
   });
+  final List<ProductivityTip> tips;
+  final VoidCallback? onNext;
 
   @override
   State<ProductivityTipCard> createState() => _ProductivityTipCardState();
@@ -20,7 +19,7 @@ class ProductivityTipCard extends StatefulWidget {
 
 class _ProductivityTipCardState extends State<ProductivityTipCard> {
   int _currentIndex = 0;
-  bool _isHovering = false;
+  final bool _isHovering = false;
 
   void _nextTip() {
     if (!mounted || widget.tips.isEmpty) return;

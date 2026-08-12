@@ -48,7 +48,7 @@ final completionPercentageProvider = AutoDisposeFutureProvider<double>.internal(
 // ignore: unused_element
 typedef CompletionPercentageRef = AutoDisposeFutureProviderRef<double>;
 String _$totalCurrentStreakHash() =>
-    r'e4bdf79a4863345e24a35dcdc29356c17a26e144';
+    r'91a6457b8464e51c3d415b08faad9dbde169c77e';
 
 /// Get total current streak sum
 ///
@@ -68,7 +68,7 @@ final totalCurrentStreakProvider = AutoDisposeProvider<int>.internal(
 // ignore: unused_element
 typedef TotalCurrentStreakRef = AutoDisposeProviderRef<int>;
 String _$totalLongestStreakHash() =>
-    r'ef9cc61d7b38295ccd2620bc8fd41fe0b6a79afd';
+    r'e63902dcdfd0bf6f0d8d81dad9f77a93bd024158';
 
 /// Get total longest streak sum
 ///
@@ -88,7 +88,7 @@ final totalLongestStreakProvider = AutoDisposeProvider<int>.internal(
 // ignore: unused_element
 typedef TotalLongestStreakRef = AutoDisposeProviderRef<int>;
 String _$completedHabitsTodayHash() =>
-    r'55701d60bb66fc55ad2730a0019eddbefd440f50';
+    r'7851be122d18d74023b99c4774c6b35665d160ef';
 
 /// Get habits completed today
 ///
@@ -108,7 +108,7 @@ final completedHabitsTodayProvider = AutoDisposeProvider<List<Habit>>.internal(
 // ignore: unused_element
 typedef CompletedHabitsTodayRef = AutoDisposeProviderRef<List<Habit>>;
 String _$pendingHabitsTodayHash() =>
-    r'd3af51e4e4cc55ff2a34cdeb54ca627b89a63a4f';
+    r'afcd94905510da543532c59cb02f22216ef5b479';
 
 /// Get habits not completed today
 ///
@@ -127,7 +127,7 @@ final pendingHabitsTodayProvider = AutoDisposeProvider<List<Habit>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef PendingHabitsTodayRef = AutoDisposeProviderRef<List<Habit>>;
-String _$activeHabitsHash() => r'56e8d7784d9fa3c548a6768fe6eff1b998096940';
+String _$activeHabitsHash() => r'ad35e1dc0c0d1bfd51bf4f0660be23c10ffbeb3c';
 
 /// Get non-archived habits
 ///
@@ -146,7 +146,7 @@ final activeHabitsProvider = AutoDisposeProvider<List<Habit>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ActiveHabitsRef = AutoDisposeProviderRef<List<Habit>>;
-String _$archivedHabitsHash() => r'36738a9e4e87328871145a267ef5da0e6b7ea341';
+String _$archivedHabitsHash() => r'7c9e2253c398c39043516cb21c5a1a8f79d02346';
 
 /// Get archived habits
 ///

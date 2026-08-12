@@ -6,17 +6,14 @@ part of 'auth_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$authNotifierHash() => r'2d24449c426d862068258f1480d74aa07ee30fec';
+String _$authNotifierHash() => r'0d930bbac81cbd3a32a74b36acfd517071d4c476';
 
 /// Represents the current authentication state of the application.
-///
-/// Watches both Firebase auth and the refresh trigger to ensure
-/// we properly track authentication from any source (Firebase or Mock).
 ///
 /// Copied from [AuthNotifier].
 @ProviderFor(AuthNotifier)
 final authNotifierProvider =
-    AutoDisposeStreamNotifierProvider<AuthNotifier, User?>.internal(
+    StreamNotifierProvider<AuthNotifier, User?>.internal(
       AuthNotifier.new,
       name: r'authNotifierProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -26,6 +23,6 @@ final authNotifierProvider =
       allTransitiveDependencies: null,
     );
 
-typedef _$AuthNotifier = AutoDisposeStreamNotifier<User?>;
+typedef _$AuthNotifier = StreamNotifier<User?>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

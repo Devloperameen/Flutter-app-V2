@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:safe/core/design/app_colors.dart';
 import 'package:safe/core/design/app_spacing.dart';
 import 'package:safe/core/utils/app_logger.dart';
+import 'package:safe/features/auth/data/repositories/auth_repository.dart';
+import 'package:safe/features/habits/data/repositories/habit_repository.dart';
 import 'package:safe/features/habits/domain/constants/habit_constants.dart';
 import 'package:safe/features/habits/domain/models/habit.dart';
-import 'package:safe/features/habits/data/repositories/habit_repository.dart';
-import 'package:safe/features/auth/data/repositories/auth_repository.dart';
-import 'package:safe/features/habits/presentation/widgets/emoji_picker.dart';
 import 'package:safe/features/habits/presentation/widgets/color_picker.dart';
+import 'package:safe/features/habits/presentation/widgets/emoji_picker.dart';
 
 class EditHabitScreen extends ConsumerStatefulWidget {
-  final String habitId;
 
   const EditHabitScreen({
     super.key,
     required this.habitId,
   });
+  final String habitId;
 
   @override
   ConsumerState<EditHabitScreen> createState() => _EditHabitScreenState();
@@ -220,8 +219,8 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      border: Border.all(color: Colors.red, width: 1),
+                      color: Colors.red.withValues(alpha: 0.1),
+                      border: Border.all(color: Colors.red),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -253,7 +252,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                             color: theme.colorScheme.surfaceContainerLow,
                             borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
                             border: Border.all(
-                              color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+                              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                             ),
                           ),
                           child: Column(
@@ -285,7 +284,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
                             border: Border.all(
-                              color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+                              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                             ),
                           ),
                           child: Column(
@@ -306,7 +305,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                                         int.parse(
                                           _selectedColor.replaceFirst('#', '0xff'),
                                         ),
-                                      ).withOpacity(0.3),
+                                      ).withValues(alpha: 0.3),
                                       blurRadius: 8,
                                     ),
                                   ],
@@ -364,7 +363,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
 
                 // Category dropdown
                 DropdownButtonFormField<String>(
-                  value: _selectedCategory,
+                  initialValue: _selectedCategory,
                   decoration: InputDecoration(
                     labelText: 'Category',
                     prefixIcon: const Icon(Icons.category_rounded),
@@ -419,7 +418,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                 if (_reminderEnabled) ...[
                   SizedBox(height: AppSpacing.lg),
                   DropdownButtonFormField<String>(
-                    value: _reminderTime,
+                    initialValue: _reminderTime,
                     decoration: InputDecoration(
                       labelText: 'Reminder Time',
                       prefixIcon: const Icon(Icons.access_time_rounded),

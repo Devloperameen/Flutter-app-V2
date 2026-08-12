@@ -25,7 +25,7 @@ final analyticsProvider = AutoDisposeProvider<AnalyticsState>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AnalyticsRef = AutoDisposeProviderRef<AnalyticsState>;
-String _$habitAnalyticsHash() => r'9672188fedccf545f4737f3f16327b165be50c35';
+String _$habitAnalyticsHash() => r'b654fadd7fe4f727977994bece606c870275987e';
 
 /// Habit analytics provider with real-time updates
 ///
@@ -66,7 +66,7 @@ final selectedPeriodLabelProvider = AutoDisposeProvider<String>.internal(
 // ignore: unused_element
 typedef SelectedPeriodLabelRef = AutoDisposeProviderRef<String>;
 String _$availableCategoriesHash() =>
-    r'4d4cc6a9021c4d57ec0ec6a40ad142e5a092b8a8';
+    r'14db9222d0c67bdc9477d3e2efb4c7f98021d5ce';
 
 /// Get filtered categories
 ///
@@ -104,7 +104,7 @@ final isAnalyticsEmptyProvider = AutoDisposeProvider<bool>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef IsAnalyticsEmptyRef = AutoDisposeProviderRef<bool>;
-String _$periodComparisonHash() => r'51a6aeec2b4c2d29628f9a2e3e2f2126bc2cda67';
+String _$periodComparisonHash() => r'b136de1766bb6184b8a9e5f4f1034d3fd753fd1a';
 
 /// Get comparison with previous period
 ///
@@ -124,7 +124,7 @@ final periodComparisonProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef PeriodComparisonRef = AutoDisposeFutureProviderRef<AnalyticsComparison>;
-String _$percentageChangeHash() => r'ebdccc56fcaf087218d708ca68d25e28989a5d59';
+String _$percentageChangeHash() => r'575c78f198c3fdfbc3e2c1e92f47b2ed0414d8f0';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -291,7 +291,7 @@ class _PercentageChangeProviderElement
   int get previous => (origin as PercentageChangeProvider).previous;
 }
 
-String _$habitPerformanceHash() => r'a357b4882f1f23487efa262c080e156b52f95eed';
+String _$habitPerformanceHash() => r'a3ce3d351a27094309f2e9c7ad6f24cb9605fcd9';
 
 /// Get analytics state for a specific habit
 ///

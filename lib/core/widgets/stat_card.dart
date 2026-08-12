@@ -5,15 +5,6 @@ import 'package:safe/core/design/app_spacing.dart';
 /// Premium stat card for displaying key metrics
 /// Used for displaying daily stats, achievements, etc.
 class StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String? subtitle;
-  final IconData icon;
-  final Color iconColor;
-  final VoidCallback? onTap;
-  final LinearGradient? gradient;
-  final bool showTrend;
-  final bool trendUp;
 
   const StatCard({
     super.key,
@@ -27,6 +18,15 @@ class StatCard extends StatelessWidget {
     this.showTrend = false,
     this.trendUp = true,
   });
+  final String title;
+  final String value;
+  final String? subtitle;
+  final IconData icon;
+  final Color iconColor;
+  final VoidCallback? onTap;
+  final LinearGradient? gradient;
+  final bool showTrend;
+  final bool trendUp;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +43,6 @@ class StatCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: colors.outline.withValues(alpha: 0.1),
-            width: 1,
           ),
           boxShadow: [
             BoxShadow(

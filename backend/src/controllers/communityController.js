@@ -140,6 +140,21 @@ const sendDirectMessage = async (req, res, next) => {
   }
 };
 
+// Helper to format message for Flutter app
+const formatMessage = (msg) => {
+  const sender = msg.senderId || {};
+  return {
+    id: msg._id,
+    userId: sender._id || sender,
+    userName: sender.fullName || 'Unknown User',
+    userProfilePhoto: sender.avatar || null,
+    message: msg.message,
+    createdAt: msg.createdAt,
+    isRead: msg.isRead,
+    roomId: msg.roomId,
+  };
+};
+
 /**
  * Get group chat messages (room-based)
  * 
@@ -156,14 +171,22 @@ const getRoomMessages = async (req, res, next) => {
     const pageNum = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, parseInt(limit) || 50);
 
-    // ─── Fetch room messages ────────────────────
-    const messages = await ChatMessage.getRoomMessages(roomId, limitNum);
+    // ─── Fetch room messages with populated sender info ────
+    const messages = await ChatMessage.find({
+      roomId,
+      isDeleted: false,
+    })
+      .sort({ createdAt: -1 })
+      .limit(limitNum)
+      .populate('senderId', 'fullName avatar') // Populate user data
+      .lean(); // Use lean for better performance
 
     const total = await ChatMessage.countDocuments({ roomId, isDeleted: false });
 
     logger.info(`✅ Fetched messages from room: ${roomId}`);
 
-    const responseData = paginated(messages, pageNum, limitNum, total, 'Room messages retrieved');
+    const formattedMessages = messages.map(formatMessage);
+    const responseData = paginated(formattedMessages, pageNum, limitNum, total, 'Room messages retrieved');
 
     sendResponse(res, responseData);
   } catch (error) {
@@ -217,7 +240,8 @@ const sendRoomMessage = async (req, res, next) => {
 
     logger.info(`✅ Room message sent to ${roomId}`);
 
-    const responseData = success(newMessage, 'Message sent to room successfully', 201);
+    const formattedMessage = formatMessage(newMessage);
+    const responseData = success(formattedMessage, 'Message sent to room successfully', 201);
     sendResponse(res, responseData);
   } catch (error) {
     logger.error('Send room message error:', error);

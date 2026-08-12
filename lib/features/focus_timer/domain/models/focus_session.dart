@@ -1,18 +1,6 @@
 /// Focus session domain model
 /// Represents a single focus/Pomodoro session
 class FocusSession {
-  final String id;
-  final String userId;
-  final String sessionType;
-  final int durationSeconds;
-  final int completedSeconds;
-  final DateTime startedAt;
-  final DateTime? endedAt;
-  final String status;
-  final String? missionTitle;
-  final int xpReward;
-  final DateTime createdAt;
-  final DateTime updatedAt;
 
   FocusSession({
     required this.id,
@@ -29,6 +17,38 @@ class FocusSession {
     required this.updatedAt,
   });
 
+  /// Convert from JSON
+  factory FocusSession.fromJson(Map<String, dynamic> json) {
+    return FocusSession(
+      id: json['_id'] as String? ?? json['id'] as String,
+      userId: json['userId'] as String? ?? '',
+      sessionType: json['sessionType'] as String,
+      durationSeconds: json['durationSeconds'] as int? ?? json['duration'] as int? ?? 0,
+      completedSeconds: json['completedSeconds'] as int? ?? 0,
+      startedAt: DateTime.parse(json['startedAt'] as String),
+      endedAt: json['endedAt'] != null
+          ? DateTime.parse(json['endedAt'] as String)
+          : (json['completedAt'] != null ? DateTime.parse(json['completedAt'] as String) : null),
+      status: json['status'] as String,
+      missionTitle: json['missionTitle'] as String?,
+      xpReward: json['xpReward'] as int? ?? json['xpEarned'] as int? ?? 0,
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : DateTime.now(),
+      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt'] as String) : DateTime.now(),
+    );
+  }
+  final String id;
+  final String userId;
+  final String sessionType;
+  final int durationSeconds;
+  final int completedSeconds;
+  final DateTime startedAt;
+  final DateTime? endedAt;
+  final String status;
+  final String? missionTitle;
+  final int xpReward;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
   /// Check if session is currently active
   bool get isActive => status == 'active';
 
@@ -44,14 +64,15 @@ class FocusSession {
     return now.difference(startedAt).inSeconds;
   }
 
-  /// Get time remaining in seconds
+  /// Get time remaining in seconds (never negative)
   int get remainingSeconds {
-    return durationSeconds - elapsedSeconds;
+    final remaining = durationSeconds - elapsedSeconds;
+    return remaining > 0 ? remaining : 0; // ✅ Never return negative values
   }
 
   /// Get progress as percentage (0.0 - 1.0)
   double get progress {
-    if (durationSeconds == 0) return 1.0;
+    if (durationSeconds == 0) return 1;
     return (elapsedSeconds / durationSeconds).clamp(0.0, 1.0);
   }
 
@@ -83,26 +104,6 @@ class FocusSession {
       xpReward: xpReward ?? this.xpReward,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
-
-  /// Convert from JSON
-  factory FocusSession.fromJson(Map<String, dynamic> json) {
-    return FocusSession(
-      id: json['_id'] as String? ?? json['id'] as String,
-      userId: json['userId'] as String? ?? '',
-      sessionType: json['sessionType'] as String,
-      durationSeconds: json['durationSeconds'] as int? ?? json['duration'] as int? ?? 0,
-      completedSeconds: json['completedSeconds'] as int? ?? 0,
-      startedAt: DateTime.parse(json['startedAt'] as String),
-      endedAt: json['endedAt'] != null
-          ? DateTime.parse(json['endedAt'] as String)
-          : (json['completedAt'] != null ? DateTime.parse(json['completedAt'] as String) : null),
-      status: json['status'] as String,
-      missionTitle: json['missionTitle'] as String?,
-      xpReward: json['xpReward'] as int? ?? json['xpEarned'] as int? ?? 0,
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : DateTime.now(),
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt'] as String) : DateTime.now(),
     );
   }
 

@@ -3,7 +3,6 @@ import 'package:safe/core/utils/app_logger.dart';
 import 'package:safe/features/auth/presentation/providers/auth_provider.dart';
 import 'package:safe/features/community/data/repositories/community_chat_repository.dart';
 import 'package:safe/features/community/domain/models/chat_message.dart';
-import 'package:uuid/uuid.dart';
 
 part 'chat_provider.g.dart';
 
@@ -79,7 +78,7 @@ class ChatNotifier extends _$ChatNotifier {
         userId: currentUser.id,
       );
 
-      log.i('✅ Message deleted');
+      log.i('✅ Message deleted successfully');
 
       // Refresh messages stream by invalidating it
       ref.invalidate(chatMessagesStreamProvider);
@@ -98,9 +97,15 @@ class ChatNotifier extends _$ChatNotifier {
       log.i('📋 Fetching paginated messages');
 
       final repository = ref.read(communityChatRepositoryProvider);
-      return await repository.getMessagesPaginated(
+      final stream = repository.getMessagesPaginated(
         limit: limit,
         startAfter: startAfter,
+      );
+      
+      // Convert stream to future by taking first element
+      return await stream.first.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => [],
       );
     } catch (e, st) {
       log.e('❌ Failed to fetch paginated messages: $e', stackTrace: st);

@@ -13,12 +13,18 @@
 
 const express = require('express');
 const communityController = require('../controllers/communityController');
+const postController = require('../controllers/postController');
 const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
 
 // ─── All routes are protected (require authentication) ───
 router.use(authenticate);
+
+// ─── Posts ─────────────────────────────────────────
+router.get('/posts', postController.getPosts);
+router.post('/posts', postController.createPost);
+router.post('/posts/:id/like', postController.toggleLike);
 
 /**
  * ─────────────────────────────────────────────────

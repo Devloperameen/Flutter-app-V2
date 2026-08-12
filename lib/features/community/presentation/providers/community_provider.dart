@@ -1,27 +1,39 @@
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:uuid/uuid.dart';
-
-import 'package:safe/core/utils/app_logger.dart';
 import 'package:safe/core/providers/core_providers.dart';
+import 'package:safe/core/utils/app_logger.dart';
 import 'package:safe/features/auth/presentation/providers/auth_provider.dart';
 import 'package:safe/features/community/data/repositories/community_repository.dart';
 import 'package:safe/features/community/domain/models/post.dart';
+import 'package:uuid/uuid.dart';
 
 part 'community_provider.g.dart';
 
+/// Stream provider for backward compatibility — UI screens that use
+/// `communityPostsStreamProvider` will get real‑time updates from
+/// the repository's broadcast stream.
 @riverpod
 Stream<List<Post>> communityPostsStream(CommunityPostsStreamRef ref) {
   final repository = ref.watch(communityRepositoryProvider);
-  return repository.getMessagesStream();
+  return repository.livePostsStream;
 }
 
 @riverpod
 class CommunityNotifier extends _$CommunityNotifier {
   @override
   FutureOr<List<Post>> build() async {
-    return _fetchPosts();
+    final repo = ref.read(communityRepositoryProvider);
+    // Load initial posts from the REST endpoint.
+    final initial = await repo.getPosts();
+    // Subscribe to real‑time updates from Socket.IO.
+    repo.livePostsStream.listen((list) {
+      if (state.value != list) {
+        state = AsyncData(list);
+      }
+    });
+    return initial;
   }
 
   Future<List<Post>> _fetchPosts() async {
@@ -31,7 +43,7 @@ class CommunityNotifier extends _$CommunityNotifier {
 
   Future<void> refresh() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _fetchPosts());
+    state = await AsyncValue.guard(_fetchPosts);
   }
 
   Future<void> toggleLike(String postId) async {
@@ -54,13 +66,13 @@ class CommunityNotifier extends _$CommunityNotifier {
 
     state = AsyncData(updatedPosts);
 
-    // 2. Network Request
+    // 2. Network request
     try {
       final repository = ref.read(communityRepositoryProvider);
       final postToUpdate = currentPosts.firstWhere((p) => p.id == postId);
       await repository.toggleLike(postId, !postToUpdate.isLikedByMe);
-    } catch (e, st) {
-      // 3. Rollback on failure — restore posts, not a full error state
+    } catch (e) {
+      // 3. Rollback on failure
       state = previousState;
     }
   }
@@ -91,17 +103,15 @@ class CommunityNotifier extends _$CommunityNotifier {
     }
   }
 
-  /// Uploads a file to Firebase Storage.
-  /// Returns the download URL on success, or null if Storage is unavailable.
+  /// Upload a file to the Express backend.
+  /// Returns the download URL on success, or null on failure.
   Future<String?> _uploadFile({
     required File file,
     required String storagePath,
   }) async {
     try {
-      // Use backend API instead of Firebase Storage
       final apiClient = ref.read(apiClientProvider);
-      
-      // Create FormData for multipart upload
+
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(
           file.path,
@@ -109,15 +119,14 @@ class CommunityNotifier extends _$CommunityNotifier {
         ),
       });
 
-      // Upload to backend
       final response = await apiClient.dio.post(
         '/uploads/community',
         data: formData,
       );
 
-      // Extract URL from response
-      final url = (response.data['data']?['url'] ?? response.data['url']) as String?;
-      
+      final url =
+          (response.data['data']?['url'] ?? response.data['url']) as String?;
+
       if (url != null) {
         log.i('✅ Media uploaded: $url');
         return url;
@@ -131,18 +140,17 @@ class CommunityNotifier extends _$CommunityNotifier {
     }
   }
 
+  /// Create a new post with optional media.
   Future<void> addPost({
     required String message,
     File? imageFile,
     File? videoFile,
   }) async {
-    // Capture current posts so we can restore on failure
     final previousPosts = state.valueOrNull ?? [];
 
     try {
       final repository = ref.read(communityRepositoryProvider);
 
-      // Get real user info from auth state
       final authUser = ref.read(authNotifierProvider).valueOrNull;
       final userId =
           authUser?.id ?? 'anonymous_${const Uuid().v4().substring(0, 8)}';
@@ -150,23 +158,20 @@ class CommunityNotifier extends _$CommunityNotifier {
           ? '${authUser.firstName} ${authUser.lastName}'.trim()
           : 'Anonymous';
 
-      // Upload media — failures are silently swallowed, post goes through without media
       String? uploadedImageUrl;
       String? uploadedVideoUrl;
 
       if (imageFile != null) {
         uploadedImageUrl = await _uploadFile(
           file: imageFile,
-          storagePath:
-              'community_posts/images/${const Uuid().v4()}.jpg',
+          storagePath: 'community_posts/images/${const Uuid().v4()}.jpg',
         );
       }
 
       if (videoFile != null) {
         uploadedVideoUrl = await _uploadFile(
           file: videoFile,
-          storagePath:
-              'community_posts/videos/${const Uuid().v4()}.mp4',
+          storagePath: 'community_posts/videos/${const Uuid().v4()}.mp4',
         );
       }
 
@@ -178,12 +183,9 @@ class CommunityNotifier extends _$CommunityNotifier {
         videoUrl: uploadedVideoUrl,
       );
 
-      // Refresh feed after posting — errors here fall to catch below
       await refresh();
     } catch (e, st) {
       log.e('❌ addPost failed: $e', stackTrace: st);
-      // Restore previous posts so the feed doesn't go blank
-      // Re-throw so the UI can show a snackbar
       state = AsyncData(previousPosts);
       rethrow;
     }

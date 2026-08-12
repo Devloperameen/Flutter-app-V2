@@ -6,12 +6,6 @@ part 'analytics_notifier.g.dart';
 
 /// State for analytics dashboard
 class AnalyticsState {
-  final AnalyticsData? data;
-  final bool isLoading;
-  final String? error;
-  final AnalyticsPeriod selectedPeriod;
-  final String? selectedCategory;
-  final bool isOffline;
 
   const AnalyticsState({
     this.data,
@@ -21,6 +15,12 @@ class AnalyticsState {
     this.selectedCategory,
     required this.isOffline,
   });
+  final AnalyticsData? data;
+  final bool isLoading;
+  final String? error;
+  final AnalyticsPeriod selectedPeriod;
+  final String? selectedCategory;
+  final bool isOffline;
 
   AnalyticsState copyWith({
     AnalyticsData? data,
@@ -58,7 +58,6 @@ class AnalyticsNotifier extends _$AnalyticsNotifier {
     state = state.copyWith(
       selectedPeriod: period,
       isLoading: true,
-      error: null,
     );
     // Fetch data for new period
     _fetchAnalytics();
@@ -69,7 +68,6 @@ class AnalyticsNotifier extends _$AnalyticsNotifier {
     state = state.copyWith(
       selectedCategory: category,
       isLoading: true,
-      error: null,
     );
     _fetchAnalytics();
   }
@@ -84,7 +82,6 @@ class AnalyticsNotifier extends _$AnalyticsNotifier {
     state = state.copyWith(
       data: data,
       isLoading: false,
-      error: null,
     );
   }
 

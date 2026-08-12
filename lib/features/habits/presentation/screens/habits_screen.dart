@@ -2,19 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:safe/core/design/app_spacing.dart';
-import 'package:safe/features/habits/domain/models/habit.dart';
-import 'package:safe/features/habits/domain/constants/habit_constants.dart';
-import 'package:safe/features/habits/presentation/providers/habits_stream_provider.dart';
-import 'package:safe/features/habits/presentation/providers/habit_actions_provider.dart';
-import 'package:safe/features/habits/presentation/widgets/habit_card.dart';
-import 'package:safe/features/habits/presentation/widgets/emoji_picker.dart';
-import 'package:safe/features/habits/presentation/widgets/color_picker.dart';
 import 'package:safe/core/utils/app_logger.dart';
-import 'package:uuid/uuid.dart';
-import 'package:safe/features/habits/data/repositories/habit_repository.dart';
-import 'package:safe/features/auth/data/repositories/auth_repository.dart';
+import 'package:safe/features/habits/domain/constants/habit_constants.dart';
+import 'package:safe/features/habits/presentation/providers/habit_actions_provider.dart';
+import 'package:safe/features/habits/presentation/providers/habits_stream_provider.dart';
+import 'package:safe/features/habits/presentation/widgets/color_picker.dart';
+import 'package:safe/features/habits/presentation/widgets/emoji_picker.dart';
+import 'package:safe/features/habits/presentation/widgets/habit_card.dart';
 
 class HabitsScreen extends ConsumerStatefulWidget {
   const HabitsScreen({super.key});
@@ -318,7 +313,7 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
 
                   // Category dropdown
                   DropdownButtonFormField<String>(
-                    value: _selectedCategory,
+                    initialValue: _selectedCategory,
                     decoration: InputDecoration(
                       labelText: 'Category',
                       prefixIcon: const Icon(Icons.category_rounded),
@@ -352,7 +347,7 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
                       ),
                       SizedBox(width: AppSpacing.md),
                       FilledButton.icon(
-                        onPressed: () => _createHabit(),
+                        onPressed: _createHabit,
                         icon: const Icon(Icons.add_rounded),
                         label: const Text('Create'),
                       ),
@@ -390,7 +385,7 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
       body: habitsAsync.when(
         data: (habits) {
           // Filter habits based on search and category
-          var filteredHabits = habits.where((h) {
+          final filteredHabits = habits.where((h) {
             final matchesSearch = h.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
                 h.category.toLowerCase().contains(_searchQuery.toLowerCase());
             final matchesCategory = _filterCategory == null || h.category == _filterCategory;
@@ -402,7 +397,7 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle, size: 64, color: theme.colorScheme.tertiary.withOpacity(0.5)),
+                  Icon(Icons.check_circle, size: 64, color: theme.colorScheme.tertiary.withValues(alpha: 0.5)),
                   SizedBox(height: AppSpacing.lg),
                   Text('No habits yet', style: theme.textTheme.headlineSmall),
                   SizedBox(height: AppSpacing.sm),
@@ -418,17 +413,22 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
             );
           }
 
-          return ListView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            children: [
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(habitsStreamProvider);
+              await Future.delayed(const Duration(milliseconds: 500));
+            },
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              children: [
               // Progress Card
               Container(
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      theme.colorScheme.primaryContainer.withOpacity(0.5),
-                      theme.colorScheme.secondaryContainer.withOpacity(0.3),
+                      theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                      theme.colorScheme.secondaryContainer.withValues(alpha: 0.3),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
@@ -439,7 +439,7 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Today\'s Progress', style: theme.textTheme.labelMedium),
+                        Text("Today's Progress", style: theme.textTheme.labelMedium),
                         SizedBox(height: AppSpacing.md),
                         Text(
                           '$completedCount/${ completedCount + pendingCount}',
@@ -560,6 +560,7 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
 
               SizedBox(height: AppSpacing.xl),
             ],
+          ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

@@ -10,7 +10,7 @@ import 'package:safe/features/focus_timer/presentation/providers/focus_providers
 /// Main screen for tracking focus/Pomodoro sessions
 /// Shows active session timer, completion controls, and statistics
 class FocusTimerScreen extends ConsumerStatefulWidget {
-  const FocusTimerScreen({Key? key}) : super(key: key);
+  const FocusTimerScreen({super.key});
 
   @override
   ConsumerState<FocusTimerScreen> createState() => _FocusTimerScreenState();
@@ -18,22 +18,26 @@ class FocusTimerScreen extends ConsumerStatefulWidget {
 
 class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
   Timer? _timerTick;
-  String _displayTime = '00:00';
 
   @override
   void initState() {
     super.initState();
-    // Start timer tick
-    _timerTick = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() {
-        // Timer UI updates on each tick
-      });
+    // Start timer tick for UI updates
+    _timerTick = Timer.periodic(const Duration(milliseconds: 100), (_) {
+      // Trigger rebuild to update UI
+      if (mounted) {
+        setState(() {
+          // Timer UI updates on each tick
+        });
+      }
     });
   }
 
   @override
   void dispose() {
+    // CRITICAL: Cancel timer to prevent memory leaks
     _timerTick?.cancel();
+    _timerTick = null;
     super.dispose();
   }
 
@@ -104,7 +108,7 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
             height: 120,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withValues(alpha: 0.1),
             ),
             child: const Icon(
               Icons.timer,
@@ -189,12 +193,13 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
     return InkWell(
       onTap: () async {
         try {
-          int finalDuration = duration;
+          var finalDuration = duration;
           if (sessionType == 'custom') {
-            finalDuration = await _showCustomDurationDialog(context) ?? 25;
+            // Dialog returns duration - if minutes/seconds depends on user choice
+            finalDuration = await _showCustomDurationDialog(context) ?? 1500; // Default 25 min
           }
 
-          // Create session
+          // Create session with duration
           await ref.read(createFocusSessionProvider(
             (sessionType: sessionType, duration: finalDuration),
           ).future);
@@ -265,7 +270,7 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -286,7 +291,7 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
             height: 220,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withValues(alpha: 0.1),
             ),
             child: Center(
               child: Text(
@@ -388,7 +393,7 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
       child: Column(
         children: [
           Text(
-            'Today\'s Statistics',
+            "Today's Statistics",
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -445,37 +450,76 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
 
   Future<int?> _showCustomDurationDialog(BuildContext context) async {
     final controller = TextEditingController(text: '25');
+    bool isMinutes = true;
+    
     return showDialog<int>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Custom Duration'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Minutes (1-300)',
-            border: OutlineInputBorder(),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Custom Duration'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Toggle between minutes and seconds
+              Row(
+                children: [
+                  Expanded(
+                    child: SegmentedButton<bool>(
+                      segments: const [
+                        ButtonSegment(label: Text('Minutes'), value: true),
+                        ButtonSegment(label: Text('Seconds'), value: false),
+                      ],
+                      selected: {isMinutes},
+                      onSelectionChanged: (Set<bool> newSelection) {
+                        setState(() => isMinutes = newSelection.first);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Input field
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: isMinutes ? 'Minutes (1-300)' : 'Seconds (1-18000)',
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                final value = int.tryParse(controller.text) ?? (isMinutes ? 25 : 1500);
+                
+                if (isMinutes) {
+                  if (value < 1 || value > 300) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Minutes must be 1-300')),
+                    );
+                    return;
+                  }
+                  Navigator.pop(context, value); // Return as minutes
+                } else {
+                  if (value < 1 || value > 18000) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Seconds must be 1-18000')),
+                    );
+                    return;
+                  }
+                  Navigator.pop(context, value); // Return as seconds
+                }
+              },
+              child: const Text('OK'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              final minutes = int.tryParse(controller.text) ?? 25;
-              if (minutes < 1 || minutes > 300) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Duration must be 1-300 minutes')),
-                );
-                return;
-              }
-              Navigator.pop(context, minutes);
-            },
-            child: const Text('OK'),
-          ),
-        ],
       ),
     );
   }
@@ -490,8 +534,40 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
       ref.refresh(focusDailyStatsProvider);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Session completed! XP awarded!')),
+        // Show completion dialog
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('✅ Session Completed!'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle, size: 64, color: Colors.green),
+                const SizedBox(height: 16),
+                Text(
+                  'You completed a ${session.sessionType} session!',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'XP Earned: +${session.xpReward}',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Continue'),
+              ),
+            ],
+          ),
         );
       }
     } catch (e) {
@@ -513,7 +589,7 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Abandon Session?'),
-        content: const Text('You won\'t earn XP for this session.'),
+        content: const Text("You won't earn XP for this session."),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),

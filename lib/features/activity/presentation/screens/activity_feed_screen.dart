@@ -7,7 +7,7 @@ import 'package:safe/features/activity/presentation/providers/activity_providers
 /// Activity Feed Screen
 /// Shows user's activity history with filtering and achievements
 class ActivityFeedScreen extends ConsumerWidget {
-  const ActivityFeedScreen({Key? key}) : super(key: key);
+  const ActivityFeedScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -67,7 +67,7 @@ class ActivityFeedScreen extends ConsumerWidget {
                         // Show achievements at the top
                         return achievements.when(
                           loading: () => const SizedBox.shrink(),
-                          error: (_, __) => const SizedBox.shrink(),
+                          error: (_, _) => const SizedBox.shrink(),
                           data: (achievementList) => _buildAchievementsCard(
                             context,
                             achievementList,
@@ -139,8 +139,8 @@ class ActivityFeedScreen extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.amber.withOpacity(0.1),
-          border: Border.all(color: Colors.amber.withOpacity(0.3)),
+          color: Colors.amber.withValues(alpha: 0.1),
+          border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -182,7 +182,7 @@ class ActivityFeedScreen extends ConsumerWidget {
   }
 
   Widget _buildAchievementBadge(Achievement achievement) {
-    return Container(
+    return SizedBox(
       width: 64,
       child: Column(
         children: [
@@ -192,8 +192,8 @@ class ActivityFeedScreen extends ConsumerWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: achievement.unlocked
-                  ? Colors.amber.withOpacity(0.2)
-                  : Colors.grey.withOpacity(0.1),
+                  ? Colors.amber.withValues(alpha: 0.2)
+                  : Colors.grey.withValues(alpha: 0.1),
               border: Border.all(
                 color: achievement.unlocked ? Colors.amber : Colors.grey,
                 width: 2,
@@ -242,7 +242,7 @@ class ActivityFeedScreen extends ConsumerWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -256,7 +256,7 @@ class ActivityFeedScreen extends ConsumerWidget {
               height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _getActivityColor(activity.type).withOpacity(0.1),
+                color: _getActivityColor(activity.type).withValues(alpha: 0.1),
               ),
               child: Center(
                 child: Text(

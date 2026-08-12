@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:safe/core/design/design.dart';
 import 'package:safe/features/analytics/presentation/screens/analytics_dashboard_screen.dart';
 import 'package:safe/features/focus_timer/presentation/screens/focus_timer_screen.dart';
 

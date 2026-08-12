@@ -3,12 +3,12 @@ import 'package:safe/features/analytics/domain/models/analytics_period.dart';
 
 /// Widget displayed when there is no analytics data
 class AnalyticsEmptyStateWidget extends StatelessWidget {
-  final AnalyticsPeriod period;
 
   const AnalyticsEmptyStateWidget({
-    Key? key,
+    super.key,
     required this.period,
-  }) : super(key: key);
+  });
+  final AnalyticsPeriod period;
 
   @override
   Widget build(BuildContext context) {
@@ -150,15 +150,15 @@ class AnalyticsEmptyStateWidget extends StatelessWidget {
 }
 
 class _TipItem extends StatelessWidget {
-  final String number;
-  final String title;
-  final String description;
 
   const _TipItem({
     required this.number,
     required this.title,
     required this.description,
   });
+  final String number;
+  final String title;
+  final String description;
 
   @override
   Widget build(BuildContext context) {

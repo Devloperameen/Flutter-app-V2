@@ -5,11 +5,6 @@ import 'package:safe/core/design/app_spacing.dart';
 /// Premium motivational header widget
 /// Displays greeting, mission statement, and inspirational quote
 class MotivationalHeader extends StatelessWidget {
-  final String greeting;
-  final String userName;
-  final String? quote;
-  final String? author;
-  final Color? quoteBackgroundColor;
 
   const MotivationalHeader({
     super.key,
@@ -19,6 +14,11 @@ class MotivationalHeader extends StatelessWidget {
     this.author,
     this.quoteBackgroundColor,
   });
+  final String greeting;
+  final String userName;
+  final String? quote;
+  final String? author;
+  final Color? quoteBackgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -70,15 +70,15 @@ class MotivationalHeader extends StatelessWidget {
 
 /// Animatedquote card with gradient background
 class _QuoteCard extends StatelessWidget {
-  final String quote;
-  final String? author;
-  final Color? backgroundColor;
 
   const _QuoteCard({
     required this.quote,
     this.author,
     this.backgroundColor,
   });
+  final String quote;
+  final String? author;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +99,6 @@ class _QuoteCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: colors.outline.withValues(alpha: 0.2),
-          width: 1,
         ),
       ),
       child: Column(

@@ -1,12 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:go_router/go_router.dart';
-
-import 'package:safe/core/constants/app_constants.dart';
-import 'package:safe/core/design/app_colors.dart';
-import 'package:safe/core/design/app_spacing.dart';
-import 'package:safe/core/router/route_names.dart';
-
 /// SAFE — Splash Screen
 ///
 /// First screen the user sees. Performs initialization and then
@@ -22,7 +15,11 @@ import 'package:safe/core/router/route_names.dart';
 /// - Check onboarding state
 /// - Route accordingly
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:safe/features/auth/presentation/providers/auth_provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:safe/core/constants/app_constants.dart';
+import 'package:safe/core/design/app_colors.dart';
+import 'package:safe/core/design/app_spacing.dart';
+import 'package:safe/core/router/route_names.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -97,7 +94,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                     .animate()
                     .scale(
                       begin: const Offset(0.5, 0.5),
-                      end: const Offset(1.0, 1.0),
+                      end: const Offset(1, 1),
                       duration: 600.ms,
                       curve: Curves.easeOutBack,
                     )

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:safe/features/analytics/domain/models/personal_records.dart';
 import 'package:intl/intl.dart';
+import 'package:safe/features/analytics/domain/models/personal_records.dart';
 
 /// Widget displaying personal records and achievements
 class PersonalRecordsWidget extends StatelessWidget {
-  final PersonalRecords personalRecords;
 
   const PersonalRecordsWidget({
-    Key? key,
+    super.key,
     required this.personalRecords,
-  }) : super(key: key);
+  });
+  final PersonalRecords personalRecords;
 
   @override
   Widget build(BuildContext context) {
@@ -147,11 +147,6 @@ class PersonalRecordsWidget extends StatelessWidget {
 }
 
 class _RecordCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-  final DateTime? date;
 
   const _RecordCard({
     required this.title,
@@ -160,15 +155,20 @@ class _RecordCard extends StatelessWidget {
     required this.color,
     this.date,
   });
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final DateTime? date;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
+        color: color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

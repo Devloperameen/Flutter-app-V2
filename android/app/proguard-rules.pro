@@ -15,6 +15,10 @@
 -dontwarn com.google.firebase.**
 -dontwarn com.google.android.gms.**
 
+## Google Play Store (Deferred Components)
+-keep class com.google.android.play.core.** { *; }
+-dontwarn com.google.android.play.core.**
+
 ## Gson (JSON serialization)
 -keepattributes Signature
 -keepattributes *Annotation*

@@ -7,7 +7,7 @@ part of 'focus_timer_provider.dart';
 // **************************************************************************
 
 String _$focusTimerNotifierHash() =>
-    r'4344b23b069405952b33262303cc0490603e02d2';
+    r'fd4872b3eb45aedcea9fb17122ed1ae0f0bc5ea3';
 
 /// See also [FocusTimerNotifier].
 @ProviderFor(FocusTimerNotifier)

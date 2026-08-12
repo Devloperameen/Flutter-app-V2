@@ -7,7 +7,7 @@ part of 'dashboard_repository.dart';
 // **************************************************************************
 
 String _$dashboardRepositoryHash() =>
-    r'eb592493c6f7200d9b137abc3822649733c1357a';
+    r'af7c87a82f6c90e95da32803740dccb4bfe157d5';
 
 /// See also [dashboardRepository].
 @ProviderFor(dashboardRepository)

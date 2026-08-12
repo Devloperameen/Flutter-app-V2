@@ -1,6 +1,6 @@
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:safe/core/design/design.dart';
 import 'package:safe/features/community/domain/models/chat_message.dart';
 import 'package:safe/features/community/presentation/providers/chat_provider.dart';
@@ -177,24 +177,33 @@ class _CommunityChatScreenState extends ConsumerState<CommunityChatScreen> {
                   _scrollToBottom();
                 });
 
-                return ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.screenHorizontal,
-                    vertical: AppSpacing.md,
-                  ),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final message = messages[index];
-                    final isCurrentUser =
-                        userInfo.valueOrNull?.userId == message.userId;
-
-                    return _MessageBubble(
-                      message: message,
-                      isCurrentUser: isCurrentUser,
-                      onDelete: () => _deleteMessage(message.id),
-                    );
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    ref.invalidate(chatMessagesStreamProvider);
+                    await Future.delayed(const Duration(milliseconds: 500));
                   },
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    reverse: false, // Do NOT reverse - messages are already oldest→newest
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.screenHorizontal,
+                      vertical: AppSpacing.md,
+                    ),
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) {
+                      // Direct index - messages list is already chronologically sorted
+                      // Index 0 = oldest, Index N = newest
+                      final message = messages[index];
+                      final isCurrentUser =
+                          userInfo.valueOrNull?.userId == message.userId;
+
+                      return _MessageBubble(
+                        message: message,
+                        isCurrentUser: isCurrentUser,
+                        onDelete: () => _deleteMessage(message.id),
+                      );
+                    },
+                  ),
                 );
               },
               loading: () => Center(
@@ -209,7 +218,7 @@ class _CommunityChatScreenState extends ConsumerState<CommunityChatScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Make sure Firestore is set up',
+                      'Be the first to say hello!',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -236,7 +245,7 @@ class _CommunityChatScreenState extends ConsumerState<CommunityChatScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 32),
                       child: Text(
                         error.toString().length > 100
-                            ? 'Check your Firestore setup'
+                            ? 'Cannot connect to the backend server'
                             : error.toString(),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
@@ -372,7 +381,6 @@ class _CommunityChatScreenState extends ConsumerState<CommunityChatScreen> {
                           },
                           config: Config(
                             height: 250,
-                            checkPlatformCompatibility: true,
                           ),
                         ),
                       ),
@@ -391,17 +399,17 @@ class _CommunityChatScreenState extends ConsumerState<CommunityChatScreen> {
   }
 }
 
-/// Message bubble widget
+/// Message bubble widget - Telegram/Instagram style
 class _MessageBubble extends ConsumerWidget {
-  final ChatMessage message;
-  final bool isCurrentUser;
-  final VoidCallback onDelete;
 
   const _MessageBubble({
     required this.message,
     required this.isCurrentUser,
     required this.onDelete,
   });
+  final ChatMessage message;
+  final bool isCurrentUser;
+  final VoidCallback onDelete;
 
   /// Generate a consistent color based on user ID
   static Color _getUserColor(String userId) {
@@ -428,9 +436,10 @@ class _MessageBubble extends ConsumerWidget {
       alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Padding(
         padding: EdgeInsets.only(
-          left: isCurrentUser ? 64 : 0,
-          right: isCurrentUser ? 0 : 64,
-          bottom: AppSpacing.md,
+          left: isCurrentUser ? 48 : 0,
+          right: isCurrentUser ? 0 : 48,
+          bottom: 12,
+          top: 2,
         ),
         child: Column(
           crossAxisAlignment:
@@ -439,28 +448,16 @@ class _MessageBubble extends ConsumerWidget {
             if (!isCurrentUser) ...[
               Padding(
                 padding: const EdgeInsets.only(
-                  left: AppSpacing.sm,
-                  bottom: 4,
+                  left: 12,
+                  bottom: 6,
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: userColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      message.userName,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: userColor,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  message.userName,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: userColor,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ],
@@ -468,52 +465,51 @@ class _MessageBubble extends ConsumerWidget {
               onLongPress: isCurrentUser ? onDelete : null,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
+                  horizontal: 14,
+                  vertical: 10,
                 ),
                 decoration: BoxDecoration(
                   color: isCurrentUser
                       ? theme.colorScheme.primary
-                      : userColor.withValues(alpha: 0.1),
+                      : userColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.only(
-                    topLeft: const Radius.circular(16),
-                    topRight: const Radius.circular(16),
-                    bottomLeft: Radius.circular(isCurrentUser ? 16 : 4),
-                    bottomRight: Radius.circular(isCurrentUser ? 4 : 16),
+                    topLeft: const Radius.circular(18),
+                    topRight: const Radius.circular(18),
+                    bottomLeft: Radius.circular(isCurrentUser ? 18 : 6),
+                    bottomRight: Radius.circular(isCurrentUser ? 6 : 18),
                   ),
-                  border: isCurrentUser
-                      ? null
-                      : Border.all(
-                          color: userColor.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 6,
+                      offset: const Offset(0, 1),
                     ),
                   ],
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                   children: [
+                    // Message text with emoji support
                     Text(
                       message.message,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: isCurrentUser
                             ? theme.colorScheme.onPrimary
                             : theme.colorScheme.onSurface,
+                        fontSize: 15,
+                        height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
+                    // Time in compact format
                     Text(
                       _formatTime(message.createdAt),
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: isCurrentUser
-                            ? theme.colorScheme.onPrimary.withValues(alpha: 0.7)
-                            : userColor.withValues(alpha: 0.7),
-                        fontSize: 10,
+                            ? theme.colorScheme.onPrimary.withValues(alpha: 0.75)
+                            : userColor.withValues(alpha: 0.6),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -529,19 +525,10 @@ class _MessageBubble extends ConsumerWidget {
   String _formatTime(DateTime dateTime) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
     final messageDate =
         DateTime(dateTime.year, dateTime.month, dateTime.day);
 
-    String dateStr;
-    if (messageDate == today) {
-      dateStr = 'Today';
-    } else if (messageDate == yesterday) {
-      dateStr = 'Yesterday';
-    } else {
-      dateStr = '${dateTime.month}/${dateTime.day}/${dateTime.year}';
-    }
-
+    // Format: HH:MM (compact like TG/Instagram)
     final timeStr =
         '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
 

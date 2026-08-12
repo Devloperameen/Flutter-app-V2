@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:table_calendar/table_calendar.dart';
-
 import 'package:safe/core/design/app_spacing.dart';
 import 'package:safe/features/habits/domain/models/habit.dart';
 import 'package:safe/features/habits/presentation/providers/habit_calendar_provider.dart';
-import 'package:safe/core/utils/app_logger.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class HabitCalendarScreen extends ConsumerStatefulWidget {
   const HabitCalendarScreen({
@@ -57,8 +55,8 @@ class _HabitCalendarScreenState extends ConsumerState<HabitCalendarScreen> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      theme.colorScheme.primaryContainer.withOpacity(0.5),
-                      theme.colorScheme.secondaryContainer.withOpacity(0.3),
+                      theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                      theme.colorScheme.secondaryContainer.withValues(alpha: 0.3),
                     ],
                   ),
                   borderRadius:

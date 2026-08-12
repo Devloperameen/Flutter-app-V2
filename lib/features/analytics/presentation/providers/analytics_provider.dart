@@ -1,11 +1,10 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:safe/features/analytics/presentation/controllers/analytics_notifier.dart';
 import 'package:safe/features/analytics/domain/models/analytics_period.dart';
 import 'package:safe/features/analytics/domain/models/habit_analytics.dart';
-import 'package:safe/features/auth/data/repositories/auth_repository.dart';
-import 'package:safe/features/analytics/data/repositories/analytics_repository.dart';
-import 'package:safe/features/habits/presentation/providers/habits_stream_provider.dart';
+import 'package:safe/features/analytics/presentation/controllers/analytics_notifier.dart';
 import 'package:safe/features/analytics/presentation/providers/analytics_providers.dart';
+import 'package:safe/features/auth/data/repositories/auth_repository.dart';
+import 'package:safe/features/habits/presentation/providers/habits_stream_provider.dart';
 
 part 'analytics_provider.g.dart';
 
@@ -52,7 +51,7 @@ List<String> availableCategories(AvailableCategoriesRef ref) {
       return categories.toList()..sort();
     },
     loading: () => [],
-    error: (_, __) => [],
+    error: (_, _) => [],
   );
 }
 
@@ -106,7 +105,7 @@ double percentageChange(PercentageChangeRef ref, {
   required int previous,
 }) {
   if (previous == 0) return 0;
-  return ((current - previous) / previous * 100);
+  return (current - previous) / previous * 100;
 }
 
 /// Get analytics state for a specific habit
@@ -151,12 +150,6 @@ Stream<List<String>> analyticsInsights(AnalyticsInsightsRef ref) async* {
 
 /// Model for comparing two periods
 class AnalyticsComparison {
-  final int currentCompletions;
-  final int previousCompletions;
-  final int currentXp;
-  final int previousXp;
-  final int currentFocusMinutes;
-  final int previousFocusMinutes;
 
   AnalyticsComparison({
     required this.currentCompletions,
@@ -175,6 +168,12 @@ class AnalyticsComparison {
     currentFocusMinutes: 0,
     previousFocusMinutes: 0,
   );
+  final int currentCompletions;
+  final int previousCompletions;
+  final int currentXp;
+  final int previousXp;
+  final int currentFocusMinutes;
+  final int previousFocusMinutes;
 
   int get completionsDiff => currentCompletions - previousCompletions;
   int get xpDiff => currentXp - previousXp;
@@ -182,17 +181,17 @@ class AnalyticsComparison {
 
   double get completionsChangePercent {
     if (previousCompletions == 0) return 0;
-    return (completionsDiff / previousCompletions * 100);
+    return completionsDiff / previousCompletions * 100;
   }
 
   double get xpChangePercent {
     if (previousXp == 0) return 0;
-    return (xpDiff / previousXp * 100);
+    return xpDiff / previousXp * 100;
   }
 
   double get focusMinutesChangePercent {
     if (previousFocusMinutes == 0) return 0;
-    return (focusMinutesDiff / previousFocusMinutes * 100);
+    return focusMinutesDiff / previousFocusMinutes * 100;
   }
 
   bool get hasImproved => completionsDiff > 0;

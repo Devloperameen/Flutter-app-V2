@@ -4,14 +4,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 /// Animated circular progress indicator
 /// Perfect for showing daily goals, streaks, and achievements
 class AnimatedProgressRing extends StatefulWidget {
-  final double progress; // 0.0 to 1.0
-  final double size;
-  final double strokeWidth;
-  final Color progressColor;
-  final Color backgroundColor;
-  final String centerLabel;
-  final TextStyle? labelStyle;
-  final Duration animationDuration;
 
   const AnimatedProgressRing({
     super.key,
@@ -24,6 +16,14 @@ class AnimatedProgressRing extends StatefulWidget {
     this.labelStyle,
     this.animationDuration = const Duration(milliseconds: 800),
   });
+  final double progress; // 0.0 to 1.0
+  final double size;
+  final double strokeWidth;
+  final Color progressColor;
+  final Color backgroundColor;
+  final String centerLabel;
+  final TextStyle? labelStyle;
+  final Duration animationDuration;
 
   @override
   State<AnimatedProgressRing> createState() => _AnimatedProgressRingState();
@@ -84,7 +84,7 @@ class _AnimatedProgressRingState extends State<AnimatedProgressRing>
               CustomPaint(
                 size: Size(widget.size, widget.size),
                 painter: _ProgressRingPainter(
-                  progress: 1.0,
+                  progress: 1,
                   color: widget.backgroundColor,
                   strokeWidth: widget.strokeWidth,
                 ),
@@ -130,15 +130,15 @@ class _AnimatedProgressRingState extends State<AnimatedProgressRing>
 
 /// Custom painter for progress ring
 class _ProgressRingPainter extends CustomPainter {
-  final double progress;
-  final Color color;
-  final double strokeWidth;
 
   _ProgressRingPainter({
     required this.progress,
     required this.color,
     required this.strokeWidth,
   });
+  final double progress;
+  final Color color;
+  final double strokeWidth;
 
   @override
   void paint(Canvas canvas, Size size) {

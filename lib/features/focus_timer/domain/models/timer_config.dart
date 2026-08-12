@@ -1,12 +1,5 @@
 /// Timer configuration for different types of focus sessions
 class TimerConfig {
-  final String id;
-  final String name;
-  final String description;
-  final int durationSeconds; // Total duration in seconds
-  final String color;
-  final String icon;
-  final int xpReward;
 
   const TimerConfig({
     required this.id,
@@ -17,6 +10,13 @@ class TimerConfig {
     required this.icon,
     required this.xpReward,
   });
+  final String id;
+  final String name;
+  final String description;
+  final int durationSeconds; // Total duration in seconds
+  final String color;
+  final String icon;
+  final int xpReward;
 
   /// Predefined timer configurations
   static const List<TimerConfig> presets = [

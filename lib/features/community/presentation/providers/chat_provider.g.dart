@@ -27,7 +27,7 @@ final chatMessagesStreamProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ChatMessagesStreamRef = AutoDisposeStreamProviderRef<List<ChatMessage>>;
-String _$chatNotifierHash() => r'8d2b622ba5a7def1df054179de73c2bdfe6f7513';
+String _$chatNotifierHash() => r'630c206107d3655c9dbbf97025a2a7863ea520a9';
 
 /// Notifier for chat operations (send, delete, etc.)
 ///

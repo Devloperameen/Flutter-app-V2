@@ -62,3 +62,7 @@ ios/Runner/GoogleService-Info.plist
 **/api_keys.dart
 **/secrets.dart
 TalkWithSadiq.apk
+
+# Keystore files
+*.jks
+key.properties

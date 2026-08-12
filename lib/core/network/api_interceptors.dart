@@ -1,9 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-
+import 'package:safe/core/network/api_endpoints.dart';
 import 'package:safe/core/storage/secure_storage_service.dart';
 import 'package:safe/core/storage/storage_keys.dart';
-import 'package:safe/core/network/api_endpoints.dart';
 import 'package:safe/core/utils/app_logger.dart';
 
 // ═══════════════════════════════════════════════════════
@@ -94,7 +93,9 @@ class AuthInterceptor extends QueuedInterceptor {
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        final data = response.data as Map<String, dynamic>;
+        final rawData = response.data as Map<String, dynamic>;
+        final data = (rawData['data'] as Map<String, dynamic>?) ?? rawData;
+        
         await secureStorage.write(
           StorageKeys.accessToken,
           data['accessToken'] as String,

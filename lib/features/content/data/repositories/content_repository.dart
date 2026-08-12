@@ -40,14 +40,14 @@ class ContentRepository {
   /// Returns: Quote object
   Future<Map<String, dynamic>> getTodayQuote() async {
     try {
-      log.i('Fetching today\'s featured quote');
+      log.i("Fetching today's featured quote");
       
       final response = await _apiClient.get(ApiEndpoints.contentQuoteToday);
       
-      log.i('✅ Today\'s quote retrieved');
+      log.i("✅ Today's quote retrieved");
       return response['data'] as Map<String, dynamic>;
     } catch (e) {
-      log.e('❌ Error fetching today\'s quote', error: e);
+      log.e("❌ Error fetching today's quote", error: e);
       rethrow;
     }
   }

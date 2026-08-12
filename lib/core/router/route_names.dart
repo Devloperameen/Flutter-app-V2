@@ -2,6 +2,7 @@
 ///
 /// Centralized route definitions prevent typos and enable
 /// type-safe navigation throughout the app.
+library;
 
 /// Named routes for GoRouter navigation.
 abstract final class RouteNames {

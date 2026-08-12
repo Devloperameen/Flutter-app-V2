@@ -5,12 +5,12 @@ import 'package:safe/features/dashboard/domain/models/daily_challenge.dart';
 
 /// Daily challenges horizontal cards
 class DailyChallengeCards extends StatelessWidget {
-  final List<DailyChallenge> challenges;
 
   const DailyChallengeCards({
     super.key,
     required this.challenges,
   });
+  final List<DailyChallenge> challenges;
 
   @override
   Widget build(BuildContext context) {
@@ -68,9 +68,9 @@ class DailyChallengeCards extends StatelessWidget {
 }
 
 class _ChallengeCard extends StatelessWidget {
-  final DailyChallenge challenge;
 
   const _ChallengeCard({required this.challenge});
+  final DailyChallenge challenge;
 
   @override
   Widget build(BuildContext context) {

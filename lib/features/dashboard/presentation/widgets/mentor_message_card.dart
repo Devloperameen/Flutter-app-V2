@@ -4,14 +4,14 @@ import 'package:safe/core/design/design.dart';
 
 /// AI Mentor message card with warm, personal feel
 class MentorMessageCard extends StatelessWidget {
-  final String message;
-  final String mentorName;
 
   const MentorMessageCard({
     super.key,
     required this.message,
     this.mentorName = 'Sadiq',
   });
+  final String message;
+  final String mentorName;
 
   @override
   Widget build(BuildContext context) {

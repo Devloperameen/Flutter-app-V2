@@ -1,10 +1,9 @@
 import 'package:riverpod/riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:safe/core/network/api_client.dart';
 import 'package:safe/core/storage/local_storage_service.dart';
 import 'package:safe/core/storage/secure_storage_service.dart';
 import 'package:safe/features/auth/data/repositories/auth_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Provides the initialized [SharedPreferences] instance.
 /// This MUST be overridden in the ProviderScope in main.dart.
@@ -33,10 +32,3 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient(secureStorage: secureStorage);
 });
 
-/// Provides the [AuthRepository].
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  // Import and reference the auth repository provider from auth feature
-  throw UnimplementedError(
-    'authRepositoryProvider should be overridden from auth feature',
-  );
-});

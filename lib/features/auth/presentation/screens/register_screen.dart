@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:safe/core/design/app_colors.dart';
 import 'package:safe/core/design/app_spacing.dart';
 import 'package:safe/core/utils/app_logger.dart';
@@ -133,14 +132,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   bool _isStrongPassword(String password) {
-    final hasUppercase = password.contains(RegExp(r'[A-Z]'));
-    final hasLowercase = password.contains(RegExp(r'[a-z]'));
-    final hasDigits = password.contains(RegExp(r'[0-9]'));
+    final hasUppercase = password.contains(RegExp('[A-Z]'));
+    final hasLowercase = password.contains(RegExp('[a-z]'));
+    final hasDigits = password.contains(RegExp('[0-9]'));
     return hasUppercase && hasLowercase && hasDigits;
   }
 
   String _formatErrorMessage(String error) {
-    String message = error;
+    var message = error;
     
     if (message.contains('email-already-in-use')) {
       return 'Email already registered. Please login or use a different email.';
@@ -151,7 +150,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     } else if (message.contains('operation-not-allowed')) {
       return 'Registration is currently disabled. Please try again later.';
     } else if (message.contains('Exception:') || message.contains('Failure:')) {
-      message = message.replaceAll(RegExp(r'Exception:|Failure:'), '').trim();
+      message = message.replaceAll(RegExp('Exception:|Failure:'), '').trim();
     }
     
     return message.isEmpty ? 'Registration failed. Please try again.' : message;
@@ -200,8 +199,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      border: Border.all(color: Colors.red, width: 1),
+                      color: Colors.red.withValues(alpha: 0.1),
+                      border: Border.all(color: Colors.red),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(

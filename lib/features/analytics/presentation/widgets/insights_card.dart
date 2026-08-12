@@ -3,12 +3,12 @@ import 'package:safe/features/analytics/domain/models/analytics_insight.dart';
 
 /// Widget displaying a single insight card
 class InsightsCard extends StatelessWidget {
-  final AnalyticsInsight insight;
 
   const InsightsCard({
-    Key? key,
+    super.key,
     required this.insight,
-  }) : super(key: key);
+  });
+  final AnalyticsInsight insight;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +28,7 @@ class InsightsCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.1),
+                    color: iconColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -179,9 +179,9 @@ class InsightsCard extends StatelessWidget {
 }
 
 class _PriorityBadge extends StatelessWidget {
-  final InsightPriority priority;
 
   const _PriorityBadge({required this.priority});
+  final InsightPriority priority;
 
   @override
   Widget build(BuildContext context) {

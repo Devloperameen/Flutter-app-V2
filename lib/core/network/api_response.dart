@@ -13,6 +13,7 @@
 ///
 /// We avoid Freezed here because generic + JSON code-gen
 /// is fragile. Plain Dart gives us full control.
+library;
 
 class ApiResponse<T> {
   const ApiResponse({
@@ -22,12 +23,6 @@ class ApiResponse<T> {
     this.error,
     this.meta,
   });
-
-  final bool success;
-  final String? message;
-  final T? data;
-  final ApiError? error;
-  final PaginationMeta? meta;
 
   /// Parse from JSON with a custom data deserialiser.
   factory ApiResponse.fromJson(
@@ -46,6 +41,12 @@ class ApiResponse<T> {
           : null,
     );
   }
+
+  final bool success;
+  final String? message;
+  final T? data;
+  final ApiError? error;
+  final PaginationMeta? meta;
 }
 
 /// Structured API error returned by the backend.
@@ -55,10 +56,6 @@ class ApiError {
     required this.message,
     this.fieldErrors,
   });
-
-  final String code;
-  final String message;
-  final Map<String, List<String>>? fieldErrors;
 
   factory ApiError.fromJson(Map<String, dynamic> json) {
     return ApiError(
@@ -74,6 +71,10 @@ class ApiError {
           : null,
     );
   }
+
+  final String code;
+  final String message;
+  final Map<String, List<String>>? fieldErrors;
 }
 
 /// Pagination metadata from Spring Boot's `Page<T>`.
@@ -87,13 +88,6 @@ class PaginationMeta {
     required this.hasPrevious,
   });
 
-  final int page;
-  final int size;
-  final int totalElements;
-  final int totalPages;
-  final bool hasNext;
-  final bool hasPrevious;
-
   factory PaginationMeta.fromJson(Map<String, dynamic> json) {
     return PaginationMeta(
       page: json['page'] as int? ?? 0,
@@ -104,4 +98,11 @@ class PaginationMeta {
       hasPrevious: json['hasPrevious'] as bool? ?? false,
     );
   }
+
+  final int page;
+  final int size;
+  final int totalElements;
+  final int totalPages;
+  final bool hasNext;
+  final bool hasPrevious;
 }

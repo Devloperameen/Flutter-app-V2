@@ -1,12 +1,6 @@
 /// Activity domain model
 /// Represents a single activity in the activity feed
 class Activity {
-  final String id;
-  final String type; // 'habit-completion', 'focus-completed', 'streak-milestone', 'level-up', etc.
-  final int xpEarned;
-  final Map<String, dynamic> metadata;
-  final DateTime createdAt;
-  final bool shared;
 
   Activity({
     required this.id,
@@ -16,6 +10,23 @@ class Activity {
     required this.createdAt,
     this.shared = false,
   });
+
+  factory Activity.fromJson(Map<String, dynamic> json) {
+    return Activity(
+      id: json['_id'] as String? ?? json['id'] as String,
+      type: json['type'] as String,
+      xpEarned: json['xpEarned'] as int? ?? 0,
+      metadata: json['metadata'] as Map<String, dynamic>? ?? {},
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      shared: json['shared'] as bool? ?? false,
+    );
+  }
+  final String id;
+  final String type; // 'habit-completion', 'focus-completed', 'streak-milestone', 'level-up', etc.
+  final int xpEarned;
+  final Map<String, dynamic> metadata;
+  final DateTime createdAt;
+  final bool shared;
 
   /// Get activity icon based on type
   String get icon {
@@ -53,17 +64,6 @@ class Activity {
     }
   }
 
-  factory Activity.fromJson(Map<String, dynamic> json) {
-    return Activity(
-      id: json['_id'] as String? ?? json['id'] as String,
-      type: json['type'] as String,
-      xpEarned: json['xpEarned'] as int? ?? 0,
-      metadata: json['metadata'] as Map<String, dynamic>? ?? {},
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      shared: json['shared'] as bool? ?? false,
-    );
-  }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -80,14 +80,7 @@ class Activity {
 }
 
 /// Achievement/Badge model
-class Achievement {
-  final String id;
-  final String name;
-  final String description;
-  final String icon;
-  final bool unlocked;
-  final DateTime? unlockedAt;
-  final int progress; // 0-100 if not unlocked
+class Achievement { // 0-100 if not unlocked
 
   Achievement({
     required this.id,
@@ -112,6 +105,13 @@ class Achievement {
       progress: json['progress'] as int? ?? 0,
     );
   }
+  final String id;
+  final String name;
+  final String description;
+  final String icon;
+  final bool unlocked;
+  final DateTime? unlockedAt;
+  final int progress;
 
   Map<String, dynamic> toJson() {
     return {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:safe/core/design/app_spacing.dart';
 import 'package:safe/core/design/app_colors.dart';
+import 'package:safe/core/design/app_spacing.dart';
 
 enum AchievementType {
   sevenDayStreak,
@@ -11,11 +11,7 @@ enum AchievementType {
   maxDaily,
 }
 
-class AchievementBadge extends StatelessWidget {
-  final AchievementType type;
-  final DateTime unlockedDate;
-  final bool isLocked;
-  final double progress; // 0-100 for locked achievements
+class AchievementBadge extends StatelessWidget { // 0-100 for locked achievements
 
   const AchievementBadge({
     super.key,
@@ -24,6 +20,10 @@ class AchievementBadge extends StatelessWidget {
     this.isLocked = false,
     this.progress = 0,
   });
+  final AchievementType type;
+  final DateTime unlockedDate;
+  final bool isLocked;
+  final double progress;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +39,7 @@ class AchievementBadge extends StatelessWidget {
         border: Border.all(
           color: isLocked
               ? theme.colorScheme.outlineVariant
-              : _getAchievementColor(theme).withOpacity(0.5),
+              : _getAchievementColor(theme).withValues(alpha: 0.5),
         ),
       ),
       child: Column(
@@ -51,12 +51,12 @@ class AchievementBadge extends StatelessWidget {
             decoration: BoxDecoration(
               color: isLocked
                   ? Colors.transparent
-                  : _getAchievementColor(theme).withOpacity(0.2),
+                  : _getAchievementColor(theme).withValues(alpha: 0.2),
               shape: BoxShape.circle,
               border: Border.all(
                 color: isLocked
                     ? theme.colorScheme.outlineVariant
-                    : _getAchievementColor(theme).withOpacity(0.5),
+                    : _getAchievementColor(theme).withValues(alpha: 0.5),
               ),
             ),
             alignment: Alignment.center,
@@ -71,7 +71,7 @@ class AchievementBadge extends StatelessWidget {
                   Icon(
                     Icons.lock_rounded,
                     size: 20,
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
               ],
             ),
@@ -91,7 +91,7 @@ class AchievementBadge extends StatelessWidget {
             Text(
               _formatDate(unlockedDate),
               style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
           ] else ...[
@@ -113,7 +113,7 @@ class AchievementBadge extends StatelessWidget {
             Text(
               '${progress.toStringAsFixed(0)}%',
               style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 fontWeight: FontWeight.bold,
               ),
             ),

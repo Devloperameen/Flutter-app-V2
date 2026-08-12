@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:safe/core/router/route_names.dart';
-import 'package:safe/features/community/presentation/screens/community_screen.dart';
-import 'package:safe/features/profile/presentation/screens/profile_screen.dart';
+import 'package:safe/features/activity/presentation/screens/activity_feed_screen.dart';
+import 'package:safe/features/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'package:safe/features/auth/presentation/providers/auth_provider.dart';
+import 'package:safe/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:safe/features/auth/presentation/screens/login_screen.dart' as safe_auth;
 import 'package:safe/features/auth/presentation/screens/register_screen.dart';
-import 'package:safe/features/auth/presentation/screens/forgot_password_screen.dart';
-import 'package:safe/features/habits/presentation/screens/habits_screen.dart';
-import 'package:safe/features/habits/presentation/screens/edit_habit_screen.dart';
-import 'package:safe/features/habits/presentation/screens/habit_calendar_screen.dart';
-import 'package:safe/features/habits/domain/models/habit.dart';
-import 'package:safe/features/dashboard/presentation/screens/dashboard_screen_simple.dart';
-import 'package:safe/features/dashboard/presentation/screens/dashboard_shell.dart';
-import 'package:safe/features/dashboard/presentation/screens/analytics_focus_combined_screen.dart';
-import 'package:safe/features/onboarding/presentation/screens/splash_screen.dart';
-import 'package:safe/features/focus_timer/presentation/screens/focus_timer_screen.dart';
-import 'package:safe/features/analytics/presentation/screens/analytics_dashboard_screen.dart';
-import 'package:safe/features/activity/presentation/screens/activity_feed_screen.dart';
+import 'package:safe/features/community/presentation/screens/community_screen.dart';
 import 'package:safe/features/content/presentation/screens/quote_screen.dart';
 import 'package:safe/features/content/presentation/screens/video_screen.dart';
-import 'package:safe/features/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'package:safe/features/dashboard/presentation/screens/analytics_focus_combined_screen.dart';
+import 'package:safe/features/dashboard/presentation/screens/dashboard_screen_simple.dart';
+import 'package:safe/features/dashboard/presentation/screens/dashboard_shell.dart';
+import 'package:safe/features/habits/domain/models/habit.dart';
+import 'package:safe/features/habits/presentation/screens/edit_habit_screen.dart';
+import 'package:safe/features/habits/presentation/screens/habit_calendar_screen.dart';
+import 'package:safe/features/habits/presentation/screens/habits_screen.dart';
+import 'package:safe/features/onboarding/presentation/screens/splash_screen.dart';
+import 'package:safe/features/profile/presentation/screens/profile_screen.dart';
+
+part 'app_router.g.dart';
 
 /// SAFE — Router Configuration
 ///
@@ -33,18 +34,51 @@ import 'package:safe/features/admin/presentation/screens/admin_dashboard_screen.
 /// 4. Nested navigation for tab-based flows
 ///
 /// Auth guards implemented with Firebase Auth listener.
-final GoRouter appRouter = GoRouter(
-  initialLocation: RoutePaths.splash,
-  debugLogDiagnostics: true,
-  routes: [
-    // ─────────────────────────────────────────
-    // Splash Screen
-    // ─────────────────────────────────────────
-    GoRoute(
-      path: RoutePaths.splash,
-      name: RouteNames.splash,
-      builder: (context, state) => const SplashScreen(),
-    ),
+@riverpod
+GoRouter appRouter(AppRouterRef ref) {
+  final listenable = ValueNotifier<bool>(false);
+
+  ref.listen(
+    authNotifierProvider,
+    (previous, next) {
+      listenable.value = !listenable.value;
+    },
+  );
+
+  return GoRouter(
+    initialLocation: RoutePaths.splash,
+    debugLogDiagnostics: true,
+    refreshListenable: listenable,
+    redirect: (context, state) {
+      final authState = ref.read(authNotifierProvider);
+
+      if (authState.isLoading) return null;
+
+      final isAuth = authState.valueOrNull != null;
+      final isSplash = state.uri.toString() == RoutePaths.splash;
+      final isLoggingIn = state.uri.toString() == RoutePaths.login ||
+          state.uri.toString() == RoutePaths.register ||
+          state.uri.toString().startsWith(RoutePaths.forgotPassword);
+
+      if (!isAuth && !isLoggingIn && !isSplash) {
+        return RoutePaths.login;
+      }
+
+      if (isAuth && (isLoggingIn || isSplash)) {
+        return RoutePaths.dashboard;
+      }
+
+      return null;
+    },
+    routes: [
+      // ─────────────────────────────────────────
+      // Splash Screen
+      // ─────────────────────────────────────────
+      GoRoute(
+        path: RoutePaths.splash,
+        name: RouteNames.splash,
+        builder: (context, state) => const SplashScreen(),
+      ),
     
     // ─────────────────────────────────────────
     // Auth Flow
@@ -155,51 +189,5 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const AdminDashboardScreen(),
     ),
   ],
-);
-
-/// Temporary placeholder screen — will be replaced as we build each feature.
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({
-    required this.title,
-    required this.icon,
-  });
-
-  final String title;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 64,
-              color: theme.colorScheme.primary.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Coming soon...',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  );
 }

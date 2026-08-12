@@ -1,12 +1,14 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:safe/core/design/design.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:safe/features/auth/presentation/providers/auth_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:safe/features/auth/domain/models/user.dart';
+import 'package:safe/features/auth/presentation/providers/auth_provider.dart';
 import 'package:safe/features/dashboard/presentation/screens/timer_page.dart';
+import 'package:safe/features/habits/presentation/providers/habits_stream_provider.dart';
+import 'package:safe/features/habits/presentation/providers/habit_actions_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Talk with Sadiq - Mindset & Habit Transformation App
 class DashboardScreenSimple extends ConsumerStatefulWidget {
@@ -32,12 +34,12 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
   final List<Map<String, String>> _motivationalQuotes = [
     {'quote': 'The only way to do great work is to love what you do.', 'author': 'Steve Jobs'},
     {'quote': 'Success is not final, failure is not fatal: it is the courage to continue that counts.', 'author': 'Winston Churchill'},
-    {'quote': 'Your time is limited, don\'t waste it living someone else\'s life.', 'author': 'Steve Jobs'},
+    {'quote': "Your time is limited, don't waste it living someone else's life.", 'author': 'Steve Jobs'},
     {'quote': 'The future belongs to those who believe in the beauty of their dreams.', 'author': 'Eleanor Roosevelt'},
-    {'quote': 'Believe you can and you\'re halfway there.', 'author': 'Theodore Roosevelt'},
+    {'quote': "Believe you can and you're halfway there.", 'author': 'Theodore Roosevelt'},
     {'quote': 'It does not matter how slowly you go as long as you do not stop.', 'author': 'Confucius'},
     {'quote': 'The only impossible journey is the one you never begin.', 'author': 'Tony Robbins'},
-    {'quote': 'Don\'t watch the clock; do what it does. Keep going.', 'author': 'Sam Levenson'},
+    {'quote': "Don't watch the clock; do what it does. Keep going.", 'author': 'Sam Levenson'},
   ];
 
   // Real YouTube motivational videos from your links
@@ -72,7 +74,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
   @override
   void initState() {
     super.initState();
-    _carouselController = PageController(initialPage: 0);
+    _carouselController = PageController();
     
     // Auto-change quote every 10 seconds
     _quoteTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
@@ -127,10 +129,18 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
     
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      body: CustomScrollView(
-        slivers: [
-          // App Bar
-          SliverAppBar(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(habitsStreamProvider);
+          // Wait a tiny bit for UI to feel responsive
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
+        color: primaryBlue,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // App Bar
+            SliverAppBar(
             floating: true,
             pinned: true,
             backgroundColor: theme.colorScheme.surface,
@@ -171,7 +181,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
                 const SizedBox(height: 24),
 
                 // B. DAILY PROGRESS OVERVIEW
-                _buildDailyProgressSection(theme),
+                _buildDailyProgressSection(theme, ref),
                 const SizedBox(height: 24),
 
                 // C. FEATURED QUOTE / VIDEO CAROUSEL
@@ -183,7 +193,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
                 const SizedBox(height: 24),
 
                 // E. TODAY'S HABITS
-                _buildHabitsSection(theme),
+                _buildHabitsSection(theme, ref),
                 const SizedBox(height: 24),
 
                 // F. DAILY MISSION
@@ -213,6 +223,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -255,7 +266,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: primaryBlue.withOpacity(0.3),
+                  color: primaryBlue.withValues(alpha: 0.3),
                   blurRadius: 8,
                 )
               ],
@@ -267,8 +278,16 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
     );
   }
 
-  // B. DAILY PROGRESS SECTION
-  Widget _buildDailyProgressSection(ThemeData theme) {
+  // B. DAILY PROGRESS OVERVIEW
+  Widget _buildDailyProgressSection(ThemeData theme, WidgetRef ref) {
+    final completionAsync = ref.watch(completionPercentageProvider);
+    final activeHabitsList = ref.watch(activeHabitsProvider);
+    final currentStreak = ref.watch(totalCurrentStreakProvider);
+    final completedHabits = ref.watch(completedHabitsTodayProvider);
+    
+    final habitsText = '${completedHabits.length}/${activeHabitsList.length}';
+    final streakText = '$currentStreak days';
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -276,41 +295,48 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
         decoration: BoxDecoration(
           color: theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
+          border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Today\'s Progress',
+              "Today's Progress",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             
             // Progress bar
-            Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            completionAsync.when(
+              data: (percentage) {
+                final displayPct = (percentage).clamp(0, 100).toInt();
+                return Column(
                   children: [
-                    Text(
-                      'Daily Completion',
-                      style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Daily Completion',
+                          style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                        Text('$displayPct%', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ],
                     ),
-                    const Text('65%', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: (percentage / 100).clamp(0.0, 1.0),
+                        minHeight: 8,
+                        backgroundColor: primaryBlue.withValues(alpha: 0.2),
+                        valueColor: const AlwaysStoppedAnimation(primaryBlue),
+                      ),
+                    ),
                   ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: 0.65,
-                    minHeight: 8,
-                    backgroundColor: primaryBlue.withOpacity(0.2),
-                    valueColor: const AlwaysStoppedAnimation(primaryBlue),
-                  ),
-                ),
-              ],
+                );
+              },
+              loading: () => const Center(child: LinearProgressIndicator()),
+              error: (e, _) => Text('Error loading progress', style: TextStyle(color: theme.colorScheme.error)),
             ),
             
             const SizedBox(height: 16),
@@ -322,7 +348,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
                   child: _buildStatCard(
                     icon: Icons.timer_rounded,
                     label: 'Focus Time',
-                    value: '2h 15m',
+                    value: '0h 0m', // Connect to focus timer data later
                     theme: theme,
                   ),
                 ),
@@ -331,7 +357,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
                   child: _buildStatCard(
                     icon: Icons.task_alt_rounded,
                     label: 'Habits',
-                    value: '4/6',
+                    value: habitsText,
                     theme: theme,
                   ),
                 ),
@@ -340,7 +366,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
                   child: _buildStatCard(
                     icon: Icons.whatshot_rounded,
                     label: 'Streak',
-                    value: '7 days',
+                    value: streakText,
                     theme: theme,
                   ),
                 ),
@@ -361,9 +387,9 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: lightBlue.withOpacity(0.1),
+        color: lightBlue.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: primaryBlue.withOpacity(0.2)),
+        border: Border.all(color: primaryBlue.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
@@ -444,7 +470,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
                           height: double.infinity,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            return Container(
+                            return ColoredBox(
                               color: primaryBlue,
                               child: const Center(
                                 child: Icon(
@@ -457,7 +483,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
                           },
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
-                            return Container(
+                            return ColoredBox(
                               color: primaryBlue,
                               child: const Center(
                                 child: CircularProgressIndicator(
@@ -537,7 +563,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
                   shape: BoxShape.circle,
                   color: index == _currentCarouselIndex
                       ? primaryBlue
-                      : primaryBlue.withOpacity(0.3),
+                      : primaryBlue.withValues(alpha: 0.3),
                 ),
               ),
             ),
@@ -568,14 +594,14 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
+                      border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
                     ),
                     child: Column(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: lightBlue.withOpacity(0.2),
+                            color: lightBlue.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.psychology_rounded, color: primaryBlue, size: 32),
@@ -594,7 +620,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
                             foregroundColor: Colors.white,
                             minimumSize: const Size(double.infinity, 36),
                             elevation: 2,
-                            shadowColor: primaryBlue.withOpacity(0.5),
+                            shadowColor: primaryBlue.withValues(alpha: 0.5),
                           ),
                         ),
                       ],
@@ -611,14 +637,14 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
+                      border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
                     ),
                     child: Column(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: lightBlue.withOpacity(0.2),
+                            color: lightBlue.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.rocket_launch_rounded, color: primaryBlue, size: 32),
@@ -637,7 +663,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
                             foregroundColor: Colors.white,
                             minimumSize: const Size(double.infinity, 36),
                             elevation: 2,
-                            shadowColor: primaryBlue.withOpacity(0.5),
+                            shadowColor: primaryBlue.withValues(alpha: 0.5),
                           ),
                         ),
                       ],
@@ -663,57 +689,76 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
   }
 
   // E. TODAY'S HABITS SECTION
-  Widget _buildHabitsSection(ThemeData theme) {
-    final habits = [
-      {'name': 'Morning Routine', 'done': true},
-      {'name': 'Meditation', 'done': true},
-      {'name': 'Reading', 'done': false},
-      {'name': 'Exercise', 'done': true},
-    ];
+  Widget _buildHabitsSection(ThemeData theme, WidgetRef ref) {
+    final habitsAsync = ref.watch(habitsStreamProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Text('Today\'s Habits', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          child: Text("Today's Habits", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         ),
         const SizedBox(height: 12),
         SizedBox(
           height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: habits.length,
-            itemBuilder: (context, index) {
-              final habit = habits[index];
-              final done = habit['done'] as bool;
-              return Container(
-                width: 140,
-                margin: EdgeInsets.only(right: index < habits.length - 1 ? 12 : 0),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: done ? primaryBlue.withValues(alpha: 0.1) : theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: done ? primaryBlue : theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(done ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                          color: done ? primaryBlue : theme.colorScheme.outlineVariant, size: 20),
-                        const Spacer(),
-                        Text(done ? '✓' : '→', style: TextStyle(color: done ? primaryBlue : theme.colorScheme.outlineVariant, fontWeight: FontWeight.bold)),
-                      ],
+          child: habitsAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => Center(child: Text('Error: $err')),
+            data: (habits) {
+              final activeHabits = habits.where((h) => !h.archived).toList();
+              
+              if (activeHabits.isEmpty) {
+                return const Center(
+                  child: Text('No habits yet. Start building good habits!'),
+                );
+              }
+
+              return ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: activeHabits.length,
+                itemBuilder: (context, index) {
+                  final habit = activeHabits[index];
+                  final done = habit.completedToday;
+                  
+                  return GestureDetector(
+                    onTap: () {
+                      if (done) {
+                        ref.read(undoHabitActionProvider(habit.id).future);
+                      } else {
+                        ref.read(completeHabitActionProvider(habit.id).future);
+                      }
+                    },
+                    child: Container(
+                      width: 140,
+                      margin: EdgeInsets.only(right: index < activeHabits.length - 1 ? 12 : 0),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: done ? primaryBlue.withValues(alpha: 0.1) : theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: done ? primaryBlue : theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(done ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                                color: done ? primaryBlue : theme.colorScheme.outlineVariant, size: 20),
+                              const Spacer(),
+                              Text(done ? '✓' : '→', style: TextStyle(color: done ? primaryBlue : theme.colorScheme.outlineVariant, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(habit.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 8),
+                          const Text('+ 50 XP', style: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold, fontSize: 12)),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(habit['name'] as String, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 8),
-                    Text('+ 50 XP', style: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold, fontSize: 12)),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),
@@ -729,20 +774,20 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [primaryBlue.withOpacity(0.1), lightBlue.withOpacity(0.1)]),
+          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [primaryBlue.withValues(alpha: 0.1), lightBlue.withValues(alpha: 0.1)]),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: primaryBlue.withOpacity(0.3)),
+          border: Border.all(color: primaryBlue.withValues(alpha: 0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: primaryBlue.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: primaryBlue.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
                   child: const Icon(Icons.star_rounded, color: primaryBlue, size: 24)),
                 const SizedBox(width: 12),
                 const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Today\'s Mission', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text("Today's Mission", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   Text('Complete one deep work session', style: TextStyle(fontSize: 13, color: Colors.grey)),
                 ])),
               ],
@@ -753,7 +798,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
               const Text('75%', style: TextStyle(fontWeight: FontWeight.bold)),
             ]),
             const SizedBox(height: 8),
-            ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearProgressIndicator(value: 0.75, minHeight: 6, backgroundColor: primaryBlue.withOpacity(0.1), valueColor: const AlwaysStoppedAnimation(primaryBlue))),
+            ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearProgressIndicator(value: 0.75, minHeight: 6, backgroundColor: primaryBlue.withValues(alpha: 0.1), valueColor: const AlwaysStoppedAnimation(primaryBlue))),
             const SizedBox(height: 12),
             SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () {}, style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, foregroundColor: Colors.white), child: const Text('Continue Mission'))),
             const SizedBox(height: 8),
@@ -778,7 +823,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(16), border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5))),
+            decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(16), border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5))),
             child: Column(
               children: [
                 Row(
@@ -838,7 +883,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
                     borderRadius: BorderRadius.circular(12),
                     child: Stack(
                       children: [
-                        Image.network(thumbnailUrl, width: double.infinity, height: double.infinity, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => Container(color: primaryBlue, child: const Center(child: Icon(Icons.video_library_rounded, color: Colors.white, size: 32)))),
+                        Image.network(thumbnailUrl, width: double.infinity, height: double.infinity, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => ColoredBox(color: primaryBlue, child: const Center(child: Icon(Icons.video_library_rounded, color: Colors.white, size: 32)))),
                         const Center(child: Icon(Icons.play_circle_filled_rounded, color: Colors.white, size: 48)),
                         Positioned(top: 8, right: 8, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3), decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(6)), child: Text(video['duration']!, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)))),
                       ],
@@ -859,7 +904,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(16), border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5))),
+        decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(16), border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5))),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -885,7 +930,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
   Widget _buildStatBox({required IconData icon, required String label, required String value, required ThemeData theme}) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: primaryBlue.withOpacity(0.05), borderRadius: BorderRadius.circular(12), border: Border.all(color: primaryBlue.withOpacity(0.2))),
+      decoration: BoxDecoration(color: primaryBlue.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12), border: Border.all(color: primaryBlue.withValues(alpha: 0.2))),
       child: Column(
         children: [
           Icon(icon, color: primaryBlue, size: 28),
@@ -930,8 +975,8 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
   Widget _buildActionButton({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.3))),
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withValues(alpha: 0.3))),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(icon, color: color, size: 32),
           const SizedBox(height: 8),
@@ -948,9 +993,9 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [primaryBlue.withOpacity(0.15), darkBlue.withOpacity(0.15)]),
+          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [primaryBlue.withValues(alpha: 0.15), darkBlue.withValues(alpha: 0.15)]),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: primaryBlue.withOpacity(0.2)),
+          border: Border.all(color: primaryBlue.withValues(alpha: 0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -963,11 +1008,11 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: primaryBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: primaryBlue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
               child: Row(children: const [
                 Icon(Icons.star_rounded, color: primaryBlue),
                 SizedBox(width: 8),
-                Expanded(child: Text('Keep going! You\'re making progress every day.', style: TextStyle(color: primaryBlue, fontWeight: FontWeight.w600))),
+                Expanded(child: Text("Keep going! You're making progress every day.", style: TextStyle(color: primaryBlue, fontWeight: FontWeight.w600))),
               ]),
             ),
           ],

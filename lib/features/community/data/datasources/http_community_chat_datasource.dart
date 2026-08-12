@@ -49,6 +49,7 @@ class HttpCommunityChatDatasource {
       );
 
       final messageData = response['data'] as Map<String, dynamic>;
+      _sanitizeChatMessageData(messageData);
       final chatMessage = ChatMessage.fromJson(messageData);
 
       log.i('✅ Direct message sent');
@@ -86,7 +87,11 @@ class HttpCommunityChatDatasource {
 
       final messagesList = response['data']['messages'] as List;
       final messages = messagesList
-          .map((msg) => ChatMessage.fromJson(msg as Map<String, dynamic>))
+          .map((msg) {
+            final msgMap = Map<String, dynamic>.from(msg as Map);
+            _sanitizeChatMessageData(msgMap);
+            return ChatMessage.fromJson(msgMap);
+          })
           .toList();
 
       log.i('✅ Fetched ${messages.length} messages');
@@ -123,9 +128,8 @@ class HttpCommunityChatDatasource {
         },
       );
 
-      final messageData = Map<String, dynamic>.from(response['data'] as Map<String, dynamic>);
-      messageData['id'] = messageData['_id'] ?? messageData['id'];
-      
+      final messageData = response['data'] as Map<String, dynamic>;
+      _sanitizeChatMessageData(messageData);
       final chatMessage = ChatMessage.fromJson(messageData);
 
       log.i('✅ Room message sent');
@@ -162,11 +166,13 @@ class HttpCommunityChatDatasource {
       );
 
       final messagesList = response['data'] as List;
-      final messages = messagesList.map((msg) {
-        final map = Map<String, dynamic>.from(msg as Map<String, dynamic>);
-        map['id'] = map['_id'] ?? map['id'];
-        return ChatMessage.fromJson(map);
-      }).toList();
+      final messages = messagesList
+          .map((msg) {
+            final msgMap = Map<String, dynamic>.from(msg as Map);
+            _sanitizeChatMessageData(msgMap);
+            return ChatMessage.fromJson(msgMap);
+          })
+          .toList();
 
       log.i('✅ Fetched ${messages.length} room messages');
       return messages;
@@ -212,11 +218,13 @@ class HttpCommunityChatDatasource {
       final response = await apiClient.get(ApiEndpoints.unreadMessages);
       final messagesList = response['data'] as List;
       
-      final messages = messagesList.map((msg) {
-        final map = Map<String, dynamic>.from(msg as Map<String, dynamic>);
-        map['id'] = map['_id'] ?? map['id'];
-        return ChatMessage.fromJson(map);
-      }).toList();
+      final messages = messagesList
+          .map((msg) {
+            final msgMap = Map<String, dynamic>.from(msg as Map);
+            _sanitizeChatMessageData(msgMap);
+            return ChatMessage.fromJson(msgMap);
+          })
+          .toList();
 
       log.i('✅ Fetched ${messages.length} unread messages');
       return messages;
@@ -304,6 +312,65 @@ class HttpCommunityChatDatasource {
     } catch (e) {
       log.e('❌ Error deleting message: $e');
       rethrow;
+    }
+  }
+
+  /// Sanitize chat message data from backend response
+  void _sanitizeChatMessageData(Map<String, dynamic> data) {
+    // Ensure required fields have proper types
+    if (data['_id'] != null && data['id'] == null) {
+      data['id'] = data['_id'].toString();
+    }
+    if (data['id'] == null) data['id'] = '';
+    
+    // Extract userId from senderId object or use it directly
+    if (data['userId'] == null && data['senderId'] != null) {
+      if (data['senderId'] is Map) {
+        data['userId'] = data['senderId']['_id']?.toString() ?? '';
+      } else {
+        data['userId'] = data['senderId'].toString();
+      }
+    }
+    if (data['userId'] == null) data['userId'] = '';
+    
+    // Extract userName from senderId object
+    if ((data['userName'] == null || data['userName'] == 'Unknown User') && 
+        data['senderId'] is Map && 
+        data['senderId']['fullName'] != null) {
+      data['userName'] = data['senderId']['fullName'];
+    }
+    if (data['userName'] == null) data['userName'] = 'Unknown User';
+    
+    // Extract avatar from senderId object
+    if (data['userProfilePhoto'] == null && 
+        data['senderId'] is Map && 
+        data['senderId']['avatar'] != null) {
+      data['userProfilePhoto'] = data['senderId']['avatar'];
+    }
+    
+    if (data['message'] == null) data['message'] = '';
+    
+    if (data['createdAt'] == null) {
+      data['createdAt'] = DateTime.now().toIso8601String();
+    }
+    
+    // Parse reactions if they exist
+    if (data['reactions'] != null && data['reactions'] is Map) {
+      final reactionsMap = <String, List<String>>{};
+      (data['reactions'] as Map).forEach((key, value) {
+        if (value is List) {
+          reactionsMap[key.toString()] = 
+            value.map((v) => v.toString()).toList();
+        }
+      });
+      data['reactions'] = reactionsMap;
+    } else {
+      data['reactions'] = {};
+    }
+    
+    // Ensure userProfilePhoto is nullable string or null
+    if (data['userProfilePhoto'] is! String && data['userProfilePhoto'] != null) {
+      data['userProfilePhoto'] = data['userProfilePhoto'].toString();
     }
   }
 }

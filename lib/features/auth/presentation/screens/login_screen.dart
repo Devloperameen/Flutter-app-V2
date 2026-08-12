@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:safe/core/design/app_colors.dart';
 import 'package:safe/core/design/app_spacing.dart';
-import 'package:safe/core/utils/app_logger.dart';
 import 'package:safe/core/router/route_names.dart';
+import 'package:safe/core/utils/app_logger.dart';
 import 'package:safe/features/auth/presentation/providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -16,8 +15,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailController = TextEditingController(text: 'demo@safe.com');
-  final _passwordController = TextEditingController(text: '');  // SECURITY: Don't prefill password
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();  // SECURITY: Don't prefill password
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -55,7 +54,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         _isLoading = false;
         
         // Extract error message properly
-        String errorMessage = e.toString();
+        var errorMessage = e.toString();
         
         // Handle various error formats
         if (errorMessage.contains('User not found')) {
@@ -157,8 +156,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      border: Border.all(color: Colors.red, width: 1),
+                      color: Colors.red.withValues(alpha: 0.1),
+                      border: Border.all(color: Colors.red),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(

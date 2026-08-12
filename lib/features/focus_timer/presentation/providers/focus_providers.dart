@@ -1,5 +1,4 @@
 import 'package:riverpod/riverpod.dart';
-import 'package:safe/core/network/api_client.dart';
 import 'package:safe/core/providers/core_providers.dart';
 import 'package:safe/features/focus_timer/data/repositories/focus_repository.dart';
 import 'package:safe/features/focus_timer/domain/models/focus_session.dart';
@@ -129,10 +128,6 @@ final focusWeeklyStatsProvider =
 /// Local state for timer countdown
 /// Tracks seconds remaining and paused state
 class TimerState {
-  final int secondsRemaining;
-  final bool isPaused;
-  final DateTime startTime;
-  final int totalSeconds;
 
   TimerState({
     required this.secondsRemaining,
@@ -140,6 +135,10 @@ class TimerState {
     required this.startTime,
     required this.totalSeconds,
   });
+  final int secondsRemaining;
+  final bool isPaused;
+  final DateTime startTime;
+  final int totalSeconds;
 
   TimerState copyWith({
     int? secondsRemaining,

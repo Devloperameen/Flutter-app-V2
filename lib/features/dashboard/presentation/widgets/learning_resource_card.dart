@@ -5,12 +5,12 @@ import 'package:safe/features/dashboard/domain/models/learning_resource.dart';
 
 /// Learning resources horizontal list
 class LearningResourceList extends StatelessWidget {
-  final List<LearningResource> resources;
 
   const LearningResourceList({
     super.key,
     required this.resources,
   });
+  final List<LearningResource> resources;
 
   @override
   Widget build(BuildContext context) {
@@ -56,9 +56,9 @@ class LearningResourceList extends StatelessWidget {
 }
 
 class _ResourceCard extends StatelessWidget {
-  final LearningResource resource;
 
   const _ResourceCard({required this.resource});
+  final LearningResource resource;
 
   @override
   Widget build(BuildContext context) {

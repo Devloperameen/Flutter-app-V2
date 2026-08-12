@@ -1,13 +1,5 @@
 /// Analytics overview data
 class AnalyticsData {
-  final String period; // 'today', 'week', 'month', 'all-time'
-  final DateTime startDate;
-  final DateTime endDate;
-  final HabitStats habits;
-  final FocusStats focus;
-  final int xpGained;
-  final StreakData streaks;
-  final ActivityStats activities;
 
   AnalyticsData({
     required this.period,
@@ -33,13 +25,18 @@ class AnalyticsData {
           ActivityStats.fromJson(json['activities'] as Map<String, dynamic>),
     );
   }
+  final String period; // 'today', 'week', 'month', 'all-time'
+  final DateTime startDate;
+  final DateTime endDate;
+  final HabitStats habits;
+  final FocusStats focus;
+  final int xpGained;
+  final StreakData streaks;
+  final ActivityStats activities;
 }
 
 /// Habit completion statistics
 class HabitStats {
-  final int completed;
-  final int total;
-  final int percentage;
 
   HabitStats({
     required this.completed,
@@ -54,13 +51,13 @@ class HabitStats {
       percentage: json['percentage'] as int,
     );
   }
+  final int completed;
+  final int total;
+  final int percentage;
 }
 
 /// Focus session statistics
 class FocusStats {
-  final int totalMinutes;
-  final int sessions;
-  final int averageDuration;
 
   FocusStats({
     required this.totalMinutes,
@@ -75,13 +72,13 @@ class FocusStats {
       averageDuration: json['averageDuration'] as int,
     );
   }
+  final int totalMinutes;
+  final int sessions;
+  final int averageDuration;
 }
 
 /// Streak tracking data
 class StreakData {
-  final int current;
-  final int longest;
-  final List<HabitStreak> habits;
 
   StreakData({
     required this.current,
@@ -99,13 +96,13 @@ class StreakData {
           .toList(),
     );
   }
+  final int current;
+  final int longest;
+  final List<HabitStreak> habits;
 }
 
 /// Individual habit streak
 class HabitStreak {
-  final String habitId;
-  final String name;
-  final int currentStreak;
 
   HabitStreak({
     required this.habitId,
@@ -120,12 +117,13 @@ class HabitStreak {
       currentStreak: json['currentStreak'] as int,
     );
   }
+  final String habitId;
+  final String name;
+  final int currentStreak;
 }
 
 /// Activity type statistics
 class ActivityStats {
-  final int count;
-  final Map<String, int> byType;
 
   ActivityStats({
     required this.count,
@@ -145,16 +143,12 @@ class ActivityStats {
       byType: byType,
     );
   }
+  final int count;
+  final Map<String, int> byType;
 }
 
 /// Leaderboard user entry
 class LeaderboardUser {
-  final int rank;
-  final String userId;
-  final String fullName;
-  final int level;
-  final int totalXP;
-  final String? avatar;
 
   LeaderboardUser({
     required this.rank,
@@ -175,15 +169,16 @@ class LeaderboardUser {
       avatar: json['avatar'] as String?,
     );
   }
+  final int rank;
+  final String userId;
+  final String fullName;
+  final int level;
+  final int totalXP;
+  final String? avatar;
 }
 
 /// User rank information
 class UserRank {
-  final int rank;
-  final int totalUsers;
-  final int percentile;
-  final int level;
-  final int totalXP;
 
   UserRank({
     required this.rank,
@@ -202,19 +197,32 @@ class UserRank {
       totalXP: json['totalXP'] as int,
     );
   }
+  final int rank;
+  final int totalUsers;
+  final int percentile;
+  final int level;
+  final int totalXP;
 }
 
 /// Insight/suggestion for user
-class Insight {
-  final String type;
-  final String message;
-  final String priority; // 'high', 'medium', 'low'
+class Insight { // 'high', 'medium', 'low'
 
   Insight({
     required this.type,
     required this.message,
     required this.priority,
   });
+
+  factory Insight.fromJson(Map<String, dynamic> json) {
+    return Insight(
+      type: json['type'] as String,
+      message: json['message'] as String,
+      priority: json['priority'] as String? ?? 'medium',
+    );
+  }
+  final String type;
+  final String message;
+  final String priority;
 
   String get icon {
     switch (type) {
@@ -229,13 +237,5 @@ class Insight {
       default:
         return '💡';
     }
-  }
-
-  factory Insight.fromJson(Map<String, dynamic> json) {
-    return Insight(
-      type: json['type'] as String,
-      message: json['message'] as String,
-      priority: json['priority'] as String? ?? 'medium',
-    );
   }
 }

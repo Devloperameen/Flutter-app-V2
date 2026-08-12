@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:safe/core/design/design.dart';
 import 'package:safe/features/community/domain/models/post.dart';
 import 'package:safe/features/community/presentation/providers/community_provider.dart';
@@ -137,9 +136,9 @@ class CommunityPostsScreen extends ConsumerWidget {
 
 /// Post Card Widget with Like, Share, Comment
 class _PostCard extends ConsumerStatefulWidget {
-  final Post post;
 
   const _PostCard({required this.post});
+  final Post post;
 
   @override
   ConsumerState<_PostCard> createState() => _PostCardState();
@@ -290,7 +289,7 @@ class _PostCardState extends ConsumerState<_PostCard> {
               widget.post.imageUrl!,
               width: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 height: 200,
                 color: theme.colorScheme.surfaceContainerHighest,
                 child: const Center(

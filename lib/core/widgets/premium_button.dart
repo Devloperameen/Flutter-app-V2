@@ -7,15 +7,6 @@ import 'package:safe/core/design/app_spacing.dart';
 enum PremiumButtonStyle { primary, secondary, tertiary, danger }
 
 class PremiumButton extends StatefulWidget {
-  final String label;
-  final VoidCallback onPressed;
-  final PremiumButtonStyle style;
-  final bool isLoading;
-  final Widget? leadingIcon;
-  final Widget? trailingIcon;
-  final double? width;
-  final double height;
-  final bool isFullWidth;
 
   const PremiumButton({
     super.key,
@@ -29,6 +20,15 @@ class PremiumButton extends StatefulWidget {
     this.height = 52,
     this.isFullWidth = false,
   });
+  final String label;
+  final VoidCallback onPressed;
+  final PremiumButtonStyle style;
+  final bool isLoading;
+  final Widget? leadingIcon;
+  final Widget? trailingIcon;
+  final double? width;
+  final double height;
+  final bool isFullWidth;
 
   @override
   State<PremiumButton> createState() => _PremiumButtonState();

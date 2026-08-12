@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 
 /// Dedicated timer screen - no state conflicts with dashboard
 class TimerPage extends StatefulWidget {
-  final int minutes;
-  final String timerType;
 
   const TimerPage({
     required this.minutes,
     required this.timerType,
     super.key,
   });
+  final int minutes;
+  final String timerType;
 
   @override
   State<TimerPage> createState() => _TimerPageState();
@@ -132,7 +132,7 @@ class _TimerPageState extends State<TimerPage> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: primaryBlue.withOpacity(0.5),
+                    color: primaryBlue.withValues(alpha: 0.5),
                     blurRadius: 30,
                     spreadRadius: 5,
                   ),

@@ -38,7 +38,7 @@ class ApiClient {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache',
         },
-        validateStatus: (status) => status != null && status < 500,
+        validateStatus: (status) => status != null && status >= 200 && status < 300,
       ),
     );
 

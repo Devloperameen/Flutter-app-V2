@@ -1,15 +1,17 @@
 import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:safe/core/design/design.dart';
 import 'package:safe/core/network/api_endpoints.dart';
-import 'package:safe/core/providers/theme_provider.dart';
 import 'package:safe/core/providers/core_providers.dart';
+import 'package:safe/core/providers/theme_provider.dart';
 import 'package:safe/core/router/route_names.dart';
+import 'package:safe/core/utils/app_logger.dart';
 import 'package:safe/features/auth/domain/models/user.dart';
 import 'package:safe/features/auth/presentation/providers/auth_provider.dart';
 import 'package:safe/features/community/presentation/screens/create_post_screen.dart';
@@ -32,6 +34,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     setState(() => _isUploadingAvatar = true);
     try {
       final file = File(picked.path);
+      log.i('📸 Uploading avatar from: ${file.path}');
+      log.i('📏 File size: ${file.lengthSync()} bytes');
       
       // Get API client from providers
       final apiClient = ref.read(apiClientProvider);
@@ -44,11 +48,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
       });
 
+      log.i('🔄 Uploading to: ${ApiEndpoints.uploadAvatar}');
+
       // Upload to backend using correct endpoint
       final response = await apiClient.dio.post(
         ApiEndpoints.uploadAvatar,
         data: formData,
       );
+
+      log.i('✅ Upload response status: ${response.statusCode}');
+      log.d('Upload response: ${response.data}');
 
       // Handle response
       if (response.statusCode == null || response.statusCode! >= 400) {
@@ -70,6 +79,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         throw Exception('No image URL returned from server');
       }
       
+      log.i('✅ Got image URL: $imageUrl');
+      
       // Update user profile with new avatar URL
       await ref.read(authNotifierProvider.notifier).updateProfile(avatarUrl: imageUrl);
       
@@ -82,6 +93,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         );
       }
     } on DioException catch (e) {
+      log.e('❌ Dio error uploading avatar: ${e.message}');
+      log.e('Response status: ${e.response?.statusCode}');
+      log.e('Response data: ${e.response?.data}');
+      
       if (mounted) {
         var errorMsg = 'Failed to upload image';
         if (e.response?.statusCode == 401) {
@@ -104,6 +119,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         );
       }
     } catch (e) {
+      log.e('❌ Error uploading avatar: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -333,6 +349,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final lastName = user?.lastName ?? '';
     final email = user?.email ?? 'user@example.com';
     final avatarUrl = user?.avatarUrl;
+    
+    // Convert relative avatar URL to full URL
+    final fullAvatarUrl = avatarUrl != null && avatarUrl.isNotEmpty
+        ? (avatarUrl.startsWith('http') 
+            ? avatarUrl 
+            : 'https://flutter-app-v2.onrender.com${avatarUrl.startsWith('/') ? avatarUrl : '/$avatarUrl'}')
+        : null;
+    
     final initial = firstName.isNotEmpty ? firstName[0].toUpperCase() : 'U';
 
     return Column(
@@ -350,8 +374,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   backgroundColor: theme.colorScheme.surface,
                   child: _isUploadingAvatar
                       ? const CircularProgressIndicator(strokeWidth: 2)
-                      : avatarUrl != null
-                          ? CircleAvatar(radius: 44, backgroundImage: NetworkImage(avatarUrl))
+                      : fullAvatarUrl != null
+                          ? CircleAvatar(radius: 44, backgroundImage: NetworkImage(fullAvatarUrl))
                           : CircleAvatar(
                               radius: 44,
                               backgroundColor: theme.colorScheme.primaryContainer,

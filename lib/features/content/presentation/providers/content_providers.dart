@@ -1,5 +1,4 @@
 import 'package:riverpod/riverpod.dart';
-import 'package:safe/core/network/api_client.dart';
 import 'package:safe/core/providers/core_providers.dart';
 import 'package:safe/features/content/data/repositories/content_repository.dart';
 

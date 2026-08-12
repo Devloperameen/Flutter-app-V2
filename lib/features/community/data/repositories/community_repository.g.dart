@@ -7,9 +7,11 @@ part of 'community_repository.dart';
 // **************************************************************************
 
 String _$communityRepositoryHash() =>
-    r'c0213565db20d0718f3d652f65d782c0bba38e16';
+    r'ea1685429620dd81dd6f333c3c70264dec6b275b';
 
-/// See also [communityRepository].
+/// Provider that creates a fully‑wired CommunityRepository.
+///
+/// Copied from [communityRepository].
 @ProviderFor(communityRepository)
 final communityRepositoryProvider =
     AutoDisposeProvider<CommunityRepository>.internal(

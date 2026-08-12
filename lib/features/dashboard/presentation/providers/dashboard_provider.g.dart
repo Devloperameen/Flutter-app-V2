@@ -6,7 +6,7 @@ part of 'dashboard_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$dashboardNotifierHash() => r'a2353790f49300123191f290cd9049f22adabca1';
+String _$dashboardNotifierHash() => r'0991c54381a34a8f772dc2052c781a8305f1690a';
 
 /// See also [DashboardNotifier].
 @ProviderFor(DashboardNotifier)

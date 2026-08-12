@@ -7,9 +7,13 @@ part of 'community_provider.dart';
 // **************************************************************************
 
 String _$communityPostsStreamHash() =>
-    r'6c22056b181beb16206f57eddece180ed8cef3e9';
+    r'2a5169c881a868577c00c36c9b79026413344aed';
 
-/// See also [communityPostsStream].
+/// Stream provider for backward compatibility — UI screens that use
+/// `communityPostsStreamProvider` will get real‑time updates from
+/// the repository's broadcast stream.
+///
+/// Copied from [communityPostsStream].
 @ProviderFor(communityPostsStream)
 final communityPostsStreamProvider =
     AutoDisposeStreamProvider<List<Post>>.internal(
@@ -25,7 +29,7 @@ final communityPostsStreamProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CommunityPostsStreamRef = AutoDisposeStreamProviderRef<List<Post>>;
-String _$communityNotifierHash() => r'11ebdbb41a833c18f1bc13ebf48c5ac82943c1d3';
+String _$communityNotifierHash() => r'0645d72682c5cc25d14e717cf4571949318e159d';
 
 /// See also [CommunityNotifier].
 @ProviderFor(CommunityNotifier)

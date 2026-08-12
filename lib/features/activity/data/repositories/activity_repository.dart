@@ -49,7 +49,7 @@ class ActivityRepository {
   /// Returns: List of activities from today
   Future<List<Map<String, dynamic>>> getTodayActivities() async {
     try {
-      log.i('Fetching today\'s activities');
+      log.i("Fetching today's activities");
       
       final response = await _apiClient.get(ApiEndpoints.activityToday);
       
@@ -59,7 +59,7 @@ class ActivityRepository {
       log.i('✅ Retrieved ${activities.length} activities from today');
       return activities;
     } catch (e) {
-      log.e('❌ Error fetching today\'s activities', error: e);
+      log.e("❌ Error fetching today's activities", error: e);
       rethrow;
     }
   }

@@ -136,7 +136,6 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
           borderSide: BorderSide(
             color: colorScheme.outlineVariant,
-            width: 1,
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -150,7 +149,6 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
           borderSide: BorderSide(
             color: colorScheme.error,
-            width: 1,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
@@ -340,7 +338,6 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
           borderSide: BorderSide(
             color: colorScheme.outlineVariant,
-            width: 1,
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -354,7 +351,6 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
           borderSide: BorderSide(
             color: colorScheme.error,
-            width: 1,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(

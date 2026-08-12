@@ -7,16 +7,6 @@ import 'package:safe/core/design/app_spacing.dart';
 /// Premium card widget with glassmorphism and animations
 /// Inspired by Apple, Notion, and Linear design systems
 class PremiumCard extends StatefulWidget {
-  final Widget child;
-  final VoidCallback? onTap;
-  final EdgeInsets padding;
-  final double borderRadius;
-  final bool showShadow;
-  final bool useGlassmorphism;
-  final Color? backgroundColor;
-  final Border? border;
-  final LinearGradient? gradient;
-  final Duration animationDuration;
 
   const PremiumCard({
     super.key,
@@ -31,6 +21,16 @@ class PremiumCard extends StatefulWidget {
     this.gradient,
     this.animationDuration = const Duration(milliseconds: 300),
   });
+  final Widget child;
+  final VoidCallback? onTap;
+  final EdgeInsets padding;
+  final double borderRadius;
+  final bool showShadow;
+  final bool useGlassmorphism;
+  final Color? backgroundColor;
+  final Border? border;
+  final LinearGradient? gradient;
+  final Duration animationDuration;
 
   @override
   State<PremiumCard> createState() => _PremiumCardState();
@@ -87,7 +87,7 @@ class _PremiumCardState extends State<PremiumCard>
         },
         child: GestureDetector(
           onTap: widget.onTap,
-          child: Container(
+          child: DecoratedBox(
             decoration: BoxDecoration(
               color: widget.backgroundColor ?? colors.surfaceContainerLow,
               gradient: widget.gradient,

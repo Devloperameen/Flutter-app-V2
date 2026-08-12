@@ -1,9 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:safe/core/providers/core_providers.dart';
+import 'package:safe/core/utils/app_logger.dart';
 import 'package:safe/features/habits/data/datasources/habit_datasource_interface.dart';
 import 'package:safe/features/habits/data/datasources/http_habit_datasource.dart';
 import 'package:safe/features/habits/domain/models/habit.dart';
-import 'package:safe/core/utils/app_logger.dart';
-import 'package:safe/core/providers/core_providers.dart';
 
 part 'habit_repository.g.dart';
 
@@ -22,8 +22,8 @@ HabitRepository habitRepository(HabitRepositoryRef ref) {
 /// No duplicate logic, no caching, datasource is the only source of truth.
 class HabitRepository {
   HabitRepository({
-    required IHabitDatasource datasource,
-  }) : _datasource = datasource;
+    required this._datasource,
+  });
 
   final IHabitDatasource _datasource;
 

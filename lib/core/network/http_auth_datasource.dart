@@ -7,6 +7,7 @@
 /// - User login
 /// - Token management
 /// - User state caching
+library;
 
 import 'package:dio/dio.dart';
 import 'package:safe/core/network/api_client.dart';
@@ -16,12 +17,6 @@ import 'package:safe/features/auth/domain/models/user.dart';
 
 /// Authentication response model
 class AuthResponse {
-  final String userId;
-  final String email;
-  final String fullName;
-  final String? avatar;
-  final String accessToken;
-  final String refreshToken;
 
   AuthResponse({
     required this.userId,
@@ -33,16 +28,15 @@ class AuthResponse {
   });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
-    // Backend response structure:
-    // { success: true, data: { userId, email, fullName, accessToken, refreshToken }, message: "...", statusCode: 201 }
+    // Backend response structure might vary (nested 'data' or flat)
+    final data = (json['data'] as Map<String, dynamic>?) ?? json;
     
-    final data = json['data'] as Map<String, dynamic>?;
-    if (data == null) {
+    if (data.isEmpty) {
       throw Exception('Invalid auth response: missing data field');
     }
     
     return AuthResponse(
-      userId: (data['userId'] ?? data['id'] ?? '') as String,
+      userId: (data['userId'] ?? data['id'] ?? data['_id'] ?? '') as String,
       email: (data['email'] ?? '') as String,
       fullName: (data['fullName'] ?? data['name'] ?? '') as String,
       avatar: data['avatar'] as String?,
@@ -50,16 +44,27 @@ class AuthResponse {
       refreshToken: (data['refreshToken'] ?? '') as String,
     );
   }
+  final String userId;
+  final String email;
+  final String fullName;
+  final String? avatar;
+  final String accessToken;
+  final String refreshToken;
 }
 
 /// HTTP-based authentication datasource
 class HttpAuthDatasource {
+
+  HttpAuthDatasource({required this.apiClient});
   final ApiClient apiClient;
 
   /// Cache for current logged-in user
   User? _currentUser;
 
-  HttpAuthDatasource({required this.apiClient});
+  /// Set the current user directly (e.g., when restoring from local storage)
+  void setCurrentUser(User user) {
+    _currentUser = user;
+  }
 
   // ─── Registration ───────────────────────────────
 
@@ -86,6 +91,15 @@ class HttpAuthDatasource {
         },
       );
 
+      // Check if response indicates success
+      final isSuccess = response['success'] as bool? ?? false;
+      if (!isSuccess) {
+        // Extract error message from error response
+        final errorMsg = response['message'] as String? ?? 'Registration failed';
+        log.e('❌ Registration failed: $errorMsg');
+        throw Exception(errorMsg);
+      }
+
       final authResponse = AuthResponse.fromJson(response);
 
       // Cache the user
@@ -97,7 +111,6 @@ class HttpAuthDatasource {
           ? authResponse.fullName.split(' ').skip(1).join(' ')
           : '',
         avatarUrl: authResponse.avatar,
-        isEmailVerified: false,
         createdAt: DateTime.now(),
       );
 
@@ -105,7 +118,7 @@ class HttpAuthDatasource {
       return authResponse;
     } on DioException catch (e) {
       // Extract meaningful error message from backend response
-      String errorMsg = 'Registration failed';
+      var errorMsg = 'Registration failed';
       
       if (e.response?.data != null) {
         final data = e.response!.data;
@@ -148,6 +161,15 @@ class HttpAuthDatasource {
         },
       );
 
+      // Check if response indicates success
+      final isSuccess = response['success'] as bool? ?? false;
+      if (!isSuccess) {
+        // Extract error message from error response
+        final errorMsg = response['message'] as String? ?? 'Login failed';
+        log.e('❌ Login failed: $errorMsg');
+        throw Exception(errorMsg);
+      }
+
       final authResponse = AuthResponse.fromJson(response);
 
       // Cache the user
@@ -159,7 +181,6 @@ class HttpAuthDatasource {
           ? authResponse.fullName.split(' ').skip(1).join(' ')
           : '',
         avatarUrl: authResponse.avatar,
-        isEmailVerified: false,
         createdAt: DateTime.now(),
       );
 
@@ -167,7 +188,7 @@ class HttpAuthDatasource {
       return authResponse;
     } on DioException catch (e) {
       // Extract meaningful error message from backend response
-      String errorMsg = 'Login failed';
+      var errorMsg = 'Login failed';
       
       if (e.response?.data != null) {
         final data = e.response!.data;
@@ -334,7 +355,7 @@ class HttpAuthDatasource {
       if (dateOfBirth != null) data['dateOfBirth'] = dateOfBirth.toIso8601String();
       if (avatarUrl != null) data['avatar'] = avatarUrl;
 
-      await apiClient.patch('${ApiEndpoints.baseUrl}/users/me', data: data);
+      await apiClient.put('/users/me', data: data);
 
       log.i('✅ Profile updated');
     } on DioException catch (e) {
@@ -352,7 +373,7 @@ class HttpAuthDatasource {
       log.i('📧 Sending password reset to $email');
 
       await apiClient.post(
-        '${ApiEndpoints.baseUrl}/auth/password-reset',
+        '/auth/password-reset',
         data: {'email': email},
       );
 
@@ -372,16 +393,21 @@ class HttpAuthDatasource {
       log.i('👤 Fetching user profile');
 
       final response = await apiClient.get(ApiEndpoints.me);
-      final userData = response['data'] as Map<String, dynamic>;
+      final userData = response['data'] as Map<String, dynamic>?;
+      
+      if (userData == null) {
+        throw Exception('No user data in response');
+      }
 
+      // Safe casting with fallbacks
       final user = User(
-        id: userData['id'] as String,
-        email: userData['email'] as String,
-        firstName: userData['firstName'] as String? ?? '',
-        lastName: userData['lastName'] as String? ?? '',
-        avatarUrl: userData['avatar'] as String?,
-        isEmailVerified: userData['isEmailVerified'] as bool? ?? false,
-        createdAt: DateTime.tryParse(userData['createdAt'] as String? ?? '') ?? DateTime.now(),
+        id: (userData['id'] ?? userData['_id'] ?? '') as String,
+        email: (userData['email'] ?? '') as String,
+        firstName: (userData['firstName'] ?? userData['first_name'] ?? '') as String,
+        lastName: (userData['lastName'] ?? userData['last_name'] ?? '') as String,
+        avatarUrl: (userData['avatar'] ?? userData['avatarUrl']) as String?,
+        isEmailVerified: (userData['isEmailVerified'] ?? userData['email_verified'] ?? false) as bool,
+        createdAt: DateTime.tryParse((userData['createdAt'] ?? userData['created_at'] ?? '') as String) ?? DateTime.now(),
       );
 
       // Update cached user
@@ -391,6 +417,7 @@ class HttpAuthDatasource {
       return user;
     } on DioException catch (e) {
       log.e('❌ Dio error fetching profile: ${e.message}');
+      log.e('Response: ${e.response?.data}');
       rethrow;
     } catch (e) {
       log.e('❌ Error fetching profile: $e');

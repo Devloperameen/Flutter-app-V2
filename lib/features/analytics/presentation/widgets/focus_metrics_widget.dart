@@ -3,12 +3,12 @@ import 'package:safe/features/analytics/domain/models/focus_analytics.dart';
 
 /// Widget displaying focus session metrics
 class FocusMetricsWidget extends StatelessWidget {
-  final FocusAnalytics focusAnalytics;
 
   const FocusMetricsWidget({
-    Key? key,
+    super.key,
     required this.focusAnalytics,
-  }) : super(key: key);
+  });
+  final FocusAnalytics focusAnalytics;
 
   @override
   Widget build(BuildContext context) {
@@ -170,15 +170,15 @@ class FocusMetricsWidget extends StatelessWidget {
 }
 
 class _FocusStatItem extends StatelessWidget {
-  final String label;
-  final String value;
-  final String subLabel;
 
   const _FocusStatItem({
     required this.label,
     required this.value,
     required this.subLabel,
   });
+  final String label;
+  final String value;
+  final String subLabel;
 
   @override
   Widget build(BuildContext context) {

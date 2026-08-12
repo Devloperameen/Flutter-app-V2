@@ -3,14 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
-  final String videoUrl;
-  final String title;
 
   const VideoPlayerScreen({
     super.key,
     required this.videoUrl,
     required this.title,
   });
+  final String videoUrl;
+  final String title;
 
   @override
   State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();

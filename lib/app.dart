@@ -36,7 +36,7 @@ class SafeApp extends ConsumerWidget {
       themeMode: themeState.themeMode,
 
       // ─── Navigation ───
-      routerConfig: appRouter,
+      routerConfig: ref.watch(appRouterProvider),
     );
   }
 }

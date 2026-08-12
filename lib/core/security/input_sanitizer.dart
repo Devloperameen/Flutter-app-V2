@@ -12,7 +12,7 @@ abstract class InputSanitizer {
     if (input == null || input.isEmpty) return '';
     
     // Remove null bytes
-    String sanitized = input.replaceAll('\x00', '');
+    var sanitized = input.replaceAll('\x00', '');
     
     // Remove potentially dangerous HTML tags
     sanitized = _removeHtmlTags(sanitized);
@@ -32,10 +32,10 @@ abstract class InputSanitizer {
   static String sanitizeEmail(String? email) {
     if (email == null || email.isEmpty) return '';
     
-    String sanitized = email.toLowerCase().trim();
+    var sanitized = email.toLowerCase().trim();
     
     // Remove dangerous characters
-    sanitized = sanitized.replaceAll(RegExp(r'''[<>"'&]'''), '');
+    sanitized = sanitized.replaceAll(RegExp('''[<>"'&]'''), '');
     
     // Limit length
     if (sanitized.length > 254) {
@@ -49,11 +49,11 @@ abstract class InputSanitizer {
   static String sanitizeName(String? name) {
     if (name == null || name.isEmpty) return '';
     
-    String sanitized = name.trim();
+    var sanitized = name.trim();
     
     // Remove HTML tags and dangerous characters
     sanitized = _removeHtmlTags(sanitized);
-    sanitized = sanitized.replaceAll(RegExp(r'''[<>"'&]'''), '');
+    sanitized = sanitized.replaceAll(RegExp('''[<>"'&]'''), '');
     
     // Only allow letters, spaces, hyphens, and apostrophes
     sanitized = sanitized.replaceAll(RegExp(r'''[^a-zA-Z\s\-']'''), '');
@@ -71,7 +71,7 @@ abstract class InputSanitizer {
     if (phone == null || phone.isEmpty) return '';
     
     // Only allow numbers, +, -, (, ), and spaces
-    String sanitized = phone.replaceAll(RegExp(r'[^0-9+\-\(\)\s]'), '');
+    var sanitized = phone.replaceAll(RegExp(r'[^0-9+\-\(\)\s]'), '');
     
     // Limit length
     if (sanitized.length > 20) {
@@ -85,7 +85,7 @@ abstract class InputSanitizer {
   static String sanitizeUrl(String? url) {
     if (url == null || url.isEmpty) return '';
     
-    String sanitized = url.trim();
+    var sanitized = url.trim();
     
     // Must start with http:// or https://
     if (!sanitized.startsWith('http://') && !sanitized.startsWith('https://')) {
@@ -93,7 +93,7 @@ abstract class InputSanitizer {
     }
     
     // Remove dangerous characters
-    sanitized = sanitized.replaceAll(RegExp(r'''[<>"'&]'''), '');
+    sanitized = sanitized.replaceAll(RegExp('''[<>"'&]'''), '');
     
     // Limit length
     if (sanitized.length > 2048) {
@@ -105,7 +105,7 @@ abstract class InputSanitizer {
   
   /// Remove HTML tags from string
   static String _removeHtmlTags(String input) {
-    return input.replaceAll(RegExp(r'<[^>]*>'), '');
+    return input.replaceAll(RegExp('<[^>]*>'), '');
   }
   
   /// Escape HTML entities
@@ -130,7 +130,7 @@ abstract class InputSanitizer {
     
     for (final entry in json.entries) {
       // Only allow alphanumeric keys with underscores
-      final key = entry.key.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '');
+      final key = entry.key.replaceAll(RegExp('[^a-zA-Z0-9_]'), '');
       if (key.isNotEmpty && key.length <= 50) {
         sanitized[key] = entry.value;
       }

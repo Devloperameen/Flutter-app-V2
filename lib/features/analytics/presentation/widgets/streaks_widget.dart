@@ -3,12 +3,12 @@ import 'package:safe/features/analytics/domain/models/habit_analytics.dart';
 
 /// Widget displaying streak statistics
 class StreaksWidget extends StatelessWidget {
-  final HabitAnalytics habitAnalytics;
 
   const StreaksWidget({
-    Key? key,
+    super.key,
     required this.habitAnalytics,
-  }) : super(key: key);
+  });
+  final HabitAnalytics habitAnalytics;
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +165,7 @@ class StreaksWidget extends StatelessWidget {
                   Expanded(
                     child: Text(
                       habitAnalytics.currentStreak > 0
-                          ? 'Keep up the momentum! Don\'t break your streak today.'
+                          ? "Keep up the momentum! Don't break your streak today."
                           : 'Start a new streak by completing your habits today!',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Colors.blue.shade900,

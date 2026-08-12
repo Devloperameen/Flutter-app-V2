@@ -1,11 +1,5 @@
 /// Inspiration post with image
-class Inspiration {
-  final String id;
-  final String title;
-  final String content;
-  final String imageUrl; // Image URL or emoji
-  final String icon;
-  final String category; // motivation, tips, achievement, etc
+class Inspiration { // motivation, tips, achievement, etc
 
   const Inspiration({
     required this.id,
@@ -15,13 +9,19 @@ class Inspiration {
     required this.icon,
     required this.category,
   });
+  final String id;
+  final String title;
+  final String content;
+  final String imageUrl; // Image URL or emoji
+  final String icon;
+  final String category;
 
   /// Predefined inspiration posts with images/emojis
   static const List<Inspiration> dailyInspirations = [
     Inspiration(
       id: 'focus_skill',
       title: 'Focus is a Skill',
-      content: 'Deep focus isn\'t talent—it\'s a skill you build one session at a time. Start small, build big.',
+      content: "Deep focus isn't talent—it's a skill you build one session at a time. Start small, build big.",
       imageUrl: '🧠',
       icon: '💡',
       category: 'motivation',
@@ -61,7 +61,7 @@ class Inspiration {
     Inspiration(
       id: 'momentum',
       title: 'Build Momentum',
-      content: 'Each completed session creates momentum for the next. You\'re building unstoppable focus power.',
+      content: "Each completed session creates momentum for the next. You're building unstoppable focus power.",
       imageUrl: '🚀',
       icon: '⚡',
       category: 'achievement',
@@ -79,7 +79,7 @@ class Inspiration {
   static List<Inspiration> getRandomMultiple(int count) {
     final random = DateTime.now().millisecondsSinceEpoch;
     final result = <Inspiration>[];
-    for (int i = 0; i < count; i++) {
+    for (var i = 0; i < count; i++) {
       result.add(
         dailyInspirations[
             (random + i) % dailyInspirations.length

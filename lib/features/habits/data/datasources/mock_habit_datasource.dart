@@ -1,22 +1,23 @@
 import 'package:safe/core/utils/app_logger.dart';
-import 'package:safe/features/habits/domain/models/habit.dart';
 import 'package:safe/features/habits/data/datasources/habit_datasource_interface.dart';
+import 'package:safe/features/habits/domain/models/habit.dart';
 
 /// Mock habit datasource for testing without Firebase.
 /// Use this while Firestore security rules are being configured.
 class MockHabitDatasource implements IHabitDatasource {
-  static final MockHabitDatasource _instance = MockHabitDatasource._internal();
 
   factory MockHabitDatasource() {
     return _instance;
   }
 
   MockHabitDatasource._internal();
+  static final MockHabitDatasource _instance = MockHabitDatasource._internal();
 
   final Map<String, List<Habit>> _habitsMap = {};
   final Map<String, Map<String, List<DateTime>>> _completionsMap = {};
 
   /// Stream all habits for user (mock version)
+  @override
   Stream<List<Habit>> getHabitsStream(String userId) {
     log.i('🔄 Fetching habits from mock datasource for user: $userId');
     _initializeUserHabits(userId);
@@ -26,6 +27,7 @@ class MockHabitDatasource implements IHabitDatasource {
   }
 
   /// Get single habit (mock version)
+  @override
   Future<Habit> getHabit(String userId, String habitId) async {
     _initializeUserHabits(userId);
     final habits = _habitsMap[userId] ?? [];
@@ -37,6 +39,7 @@ class MockHabitDatasource implements IHabitDatasource {
   }
 
   /// Create a new habit (mock version)
+  @override
   Future<Habit> createHabit(String userId, Habit habit) async {
     log.i('➕ [MOCK] Creating habit: ${habit.title}');
     _initializeUserHabits(userId);
@@ -50,6 +53,7 @@ class MockHabitDatasource implements IHabitDatasource {
   }
 
   /// Update habit metadata (mock version)
+  @override
   Future<void> updateHabit(String userId, Habit habit) async {
     log.i('✏️ [MOCK] Updating habit: ${habit.id}');
     _initializeUserHabits(userId);
@@ -68,6 +72,7 @@ class MockHabitDatasource implements IHabitDatasource {
   }
 
   /// Mark habit as completed for today (mock version)
+  @override
   Future<Habit> markHabitComplete(String userId, String habitId) async {
     log.i('✅ [MOCK] Marking habit complete: $habitId');
     _initializeUserHabits(userId);
@@ -88,8 +93,8 @@ class MockHabitDatasource implements IHabitDatasource {
     }
     
     // Calculate new streak
-    int newStreak = habit.currentStreak + 1;
-    int newLongestStreak = (newStreak > habit.longestStreak) ? newStreak : habit.longestStreak;
+    final newStreak = habit.currentStreak + 1;
+    final newLongestStreak = (newStreak > habit.longestStreak) ? newStreak : habit.longestStreak;
     
     final updatedHabit = habit.copyWith(
       completedToday: true,
@@ -108,6 +113,7 @@ class MockHabitDatasource implements IHabitDatasource {
   }
 
   /// Undo habit completion for today (mock version)
+  @override
   Future<Habit> undoHabitComplete(String userId, String habitId) async {
     log.i('↩️ [MOCK] Undoing completion: $habitId');
     _initializeUserHabits(userId);
@@ -126,7 +132,7 @@ class MockHabitDatasource implements IHabitDatasource {
       return habit;
     }
     
-    int newStreak = (habit.currentStreak - 1).clamp(0, 999999);
+    final newStreak = (habit.currentStreak - 1).clamp(0, 999999);
     
     final updatedHabit = habit.copyWith(
       completedToday: false,
@@ -143,6 +149,7 @@ class MockHabitDatasource implements IHabitDatasource {
   }
 
   /// Archive a habit (mock version)
+  @override
   Future<void> archiveHabit(String userId, String habitId) async {
     log.i('📦 [MOCK] Archiving habit: $habitId');
     _initializeUserHabits(userId);
@@ -162,6 +169,7 @@ class MockHabitDatasource implements IHabitDatasource {
   }
 
   /// Restore an archived habit (mock version)
+  @override
   Future<void> restoreHabit(String userId, String habitId) async {
     log.i('♻️ [MOCK] Restoring habit: $habitId');
     _initializeUserHabits(userId);
@@ -181,6 +189,7 @@ class MockHabitDatasource implements IHabitDatasource {
   }
 
   /// Delete a habit permanently (mock version)
+  @override
   Future<void> deleteHabit(String userId, String habitId) async {
     log.i('🗑️ [MOCK] Deleting habit: $habitId');
     _initializeUserHabits(userId);
@@ -193,6 +202,7 @@ class MockHabitDatasource implements IHabitDatasource {
   }
 
   /// Duplicate a habit (mock version)
+  @override
   Future<Habit> duplicateHabit(String userId, String habitId) async {
     log.i('📋 [MOCK] Duplicating habit: $habitId');
     
@@ -211,12 +221,13 @@ class MockHabitDatasource implements IHabitDatasource {
   }
 
   /// Reorder habits (mock version)
+  @override
   Future<void> reorderHabits(String userId, List<String> habitIds) async {
     log.i('🔄 [MOCK] Reordering ${habitIds.length} habits');
     _initializeUserHabits(userId);
     
     final habits = _habitsMap[userId] ?? [];
-    for (int i = 0; i < habitIds.length; i++) {
+    for (var i = 0; i < habitIds.length; i++) {
       final index = habits.indexWhere((h) => h.id == habitIds[i]);
       if (index != -1) {
         habits[index] = habits[index].copyWith(order: i);
@@ -228,6 +239,7 @@ class MockHabitDatasource implements IHabitDatasource {
   }
 
   /// Get completion history (mock version)
+  @override
   Future<List<DateTime>> getCompletionHistory(
     String userId,
     String habitId,

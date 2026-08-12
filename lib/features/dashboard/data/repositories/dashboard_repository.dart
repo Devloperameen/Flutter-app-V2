@@ -1,12 +1,11 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
 import 'package:safe/core/errors/failures.dart';
-import 'package:safe/core/utils/app_logger.dart';
-import 'package:safe/features/dashboard/data/datasources/dashboard_remote_datasource.dart';
-import 'package:safe/features/dashboard/domain/models/dashboard_data.dart';
-import 'package:safe/features/auth/data/repositories/auth_repository.dart';
 import 'package:safe/core/network/api_client.dart';
 import 'package:safe/core/providers/core_providers.dart';
+import 'package:safe/core/utils/app_logger.dart';
+import 'package:safe/features/auth/data/repositories/auth_repository.dart';
+import 'package:safe/features/dashboard/data/datasources/dashboard_remote_datasource.dart';
+import 'package:safe/features/dashboard/domain/models/dashboard_data.dart';
 
 part 'dashboard_repository.g.dart';
 

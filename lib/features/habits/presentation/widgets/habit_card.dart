@@ -5,12 +5,6 @@ import 'package:safe/features/habits/domain/models/habit.dart';
 
 /// Reusable habit card widget
 class HabitCard extends StatelessWidget {
-  final Habit habit;
-  final VoidCallback onTap;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-  final VoidCallback onArchive;
-  final VoidCallback? onViewHistory;
 
   const HabitCard({
     super.key,
@@ -21,6 +15,12 @@ class HabitCard extends StatelessWidget {
     required this.onArchive,
     this.onViewHistory,
   });
+  final Habit habit;
+  final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  final VoidCallback onArchive;
+  final VoidCallback? onViewHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -35,14 +35,14 @@ class HabitCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
           border: Border.all(
             color: habit.completedToday
-                ? theme.colorScheme.primary.withOpacity(0.3)
-                : theme.colorScheme.outlineVariant.withOpacity(0.2),
+                ? theme.colorScheme.primary.withValues(alpha: 0.3)
+                : theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
             width: habit.completedToday ? 2 : 1,
           ),
           boxShadow: [
             if (habit.completedToday)
               BoxShadow(
-                color: theme.colorScheme.primary.withOpacity(0.1),
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 blurRadius: 8,
                 spreadRadius: 1,
               ),
@@ -198,7 +198,7 @@ class HabitCard extends StatelessWidget {
                     vertical: AppSpacing.xxs,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                    color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(AppSpacing.chipRadius),
                   ),
                   child: Text(
@@ -219,7 +219,7 @@ class HabitCard extends StatelessWidget {
                       vertical: AppSpacing.xxs,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF6B6B).withOpacity(0.1),
+                      color: const Color(0xFFFF6B6B).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppSpacing.chipRadius),
                     ),
                     child: Row(
@@ -251,7 +251,7 @@ class HabitCard extends StatelessWidget {
                       vertical: AppSpacing.xxs,
                     ),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.tertiaryContainer.withOpacity(0.3),
+                      color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(AppSpacing.chipRadius),
                     ),
                     child: Row(
@@ -278,7 +278,7 @@ class HabitCard extends StatelessWidget {
 
                 // Completion percentage
                 Text(
-                  '${(habit.totalCompletions > 0 ? ((habit.totalCompletions / 365) * 100).toStringAsFixed(0) : 0)}%',
+                  '${habit.totalCompletions > 0 ? ((habit.totalCompletions / 365) * 100).toStringAsFixed(0) : 0}%',
                   style: theme.textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.primary,

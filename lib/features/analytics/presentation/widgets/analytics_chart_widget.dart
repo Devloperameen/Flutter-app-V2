@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:safe/features/analytics/domain/models/analytics_period.dart';
-import 'package:safe/features/analytics/domain/models/habit_analytics.dart';
 import 'package:safe/features/analytics/domain/models/focus_analytics.dart';
+import 'package:safe/features/analytics/domain/models/habit_analytics.dart';
 
 /// Widget displaying analytics charts
 class AnalyticsChartWidget extends StatelessWidget {
-  final HabitAnalytics habitAnalytics;
-  final FocusAnalytics focusAnalytics;
-  final AnalyticsPeriod period;
 
   const AnalyticsChartWidget({
-    Key? key,
+    super.key,
     required this.habitAnalytics,
     required this.focusAnalytics,
     required this.period,
-  }) : super(key: key);
+  });
+  final HabitAnalytics habitAnalytics;
+  final FocusAnalytics focusAnalytics;
+  final AnalyticsPeriod period;
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +150,7 @@ class AnalyticsChartWidget extends StatelessWidget {
                           child: Container(
                             width: 24,
                             decoration: BoxDecoration(
-                              color: barColor.withOpacity(0.7),
+                              color: barColor.withValues(alpha: 0.7),
                               borderRadius: const BorderRadius.vertical(
                                 top: Radius.circular(4),
                               ),

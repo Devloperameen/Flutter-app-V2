@@ -7,7 +7,7 @@ import 'package:safe/features/analytics/presentation/providers/analytics_provide
 /// Shows comprehensive analytics with period selector
 /// Displays habits, focus sessions, XP progression, insights
 class AnalyticsDashboardScreen extends ConsumerWidget {
-  const AnalyticsDashboardScreen({Key? key}) : super(key: key);
+  const AnalyticsDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -84,7 +84,7 @@ class AnalyticsDashboardScreen extends ConsumerWidget {
             // User rank section
             userRank.when(
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
               data: (rank) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _buildRankCard(context, rank),
@@ -220,9 +220,9 @@ class AnalyticsDashboardScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -437,8 +437,8 @@ class AnalyticsDashboardScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
-        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+        color: Colors.blue.withValues(alpha: 0.1),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -514,8 +514,8 @@ class AnalyticsDashboardScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: color.withValues(alpha: 0.1),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

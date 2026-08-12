@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
 import 'package:safe/core/design/design.dart';
+import 'package:video_player/video_player.dart';
 
 class PostVideoPlayer extends StatefulWidget {
-  final String videoUrl;
 
   const PostVideoPlayer({super.key, required this.videoUrl});
+  final String videoUrl;
 
   @override
   State<PostVideoPlayer> createState() => _PostVideoPlayerState();
@@ -68,7 +68,7 @@ class _PostVideoPlayerState extends State<PostVideoPlayer> {
             VideoPlayer(_controller),
             GestureDetector(
               onTap: _togglePlayPause,
-              child: Container(
+              child: ColoredBox(
                 color: Colors.transparent,
                 child: Center(
                   child: Icon(

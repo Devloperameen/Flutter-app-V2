@@ -50,15 +50,15 @@ class AnalyticsHeader extends ConsumerWidget {
 
 /// Individual period tab widget
 class _PeriodTab extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
 
   const _PeriodTab({
     required this.label,
     required this.isSelected,
     required this.onTap,
   });
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {

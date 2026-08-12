@@ -1,17 +1,15 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
 import 'package:safe/core/errors/failures.dart';
+import 'package:safe/core/network/http_auth_datasource.dart';
+import 'package:safe/core/providers/core_providers.dart';
 import 'package:safe/core/storage/secure_storage_service.dart';
 import 'package:safe/core/storage/storage_keys.dart';
 import 'package:safe/core/utils/app_logger.dart';
-import 'package:safe/core/network/http_auth_datasource.dart';
-import 'package:safe/core/network/api_client.dart';
 import 'package:safe/features/auth/domain/models/user.dart';
-import 'package:safe/core/providers/core_providers.dart';
 
 part 'auth_repository.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 AuthRepository authRepository(AuthRepositoryRef ref) {
   final apiClient = ref.watch(apiClientProvider);
   final httpDataSource = HttpAuthDatasource(apiClient: apiClient);
@@ -49,7 +47,7 @@ class AuthRepository {
         isEmailVerified: true,
         createdAt: DateTime.now(),
       );
-      await _persistUser(user, authResponse.accessToken);
+      await _persistUser(user, authResponse.accessToken, refreshToken: authResponse.refreshToken);
       return user;
     } catch (e, stackTrace) {
       log.e('❌ Login error: $e', error: e, stackTrace: stackTrace);
@@ -82,7 +80,7 @@ class AuthRepository {
         isEmailVerified: true,
         createdAt: DateTime.now(),
       );
-      await _persistUser(user, authResponse.accessToken);
+      await _persistUser(user, authResponse.accessToken, refreshToken: authResponse.refreshToken);
       return user;
     } catch (e, stackTrace) {
       log.e('❌ Register error: $e', error: e, stackTrace: stackTrace);
@@ -169,6 +167,11 @@ class AuthRepository {
     return httpDataSource.getCurrentUser();
   }
 
+  /// Set the current user explicitly
+  void setCurrentUser(User user) {
+    httpDataSource.setCurrentUser(user);
+  }
+
   /// Get current user ID
   String? getCurrentUserId() {
     return httpDataSource.getCurrentUserId();
@@ -180,12 +183,16 @@ class AuthRepository {
   }
 
   /// Persist user data locally
-  Future<void> _persistUser(User user, String token) async {
+  Future<void> _persistUser(User user, String token, {String refreshToken = ''}) async {
     try {
       log.i('💾 Persisting user data: ${user.id} / ${user.email}');
       await secureStorage.write(StorageKeys.userId, user.id);
       await secureStorage.write(StorageKeys.userEmail, user.email);
       await secureStorage.write(StorageKeys.accessToken, token);
+      await secureStorage.write(StorageKeys.userName, user.firstName);
+      if (refreshToken.isNotEmpty) {
+        await secureStorage.write(StorageKeys.refreshToken, refreshToken);
+      }
       log.i('✅ User data persisted successfully');
     } catch (e) {
       log.e('❌ Failed to persist user data: $e', error: e);

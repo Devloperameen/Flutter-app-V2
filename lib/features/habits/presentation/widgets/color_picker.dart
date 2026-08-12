@@ -4,14 +4,14 @@ import 'package:safe/features/habits/domain/constants/habit_constants.dart';
 
 /// Color picker widget for selecting habit colors
 class ColorPickerWidget extends StatefulWidget {
-  final String selectedColor;
-  final ValueChanged<String> onColorSelected;
 
   const ColorPickerWidget({
     super.key,
     required this.selectedColor,
     required this.onColorSelected,
   });
+  final String selectedColor;
+  final ValueChanged<String> onColorSelected;
 
   @override
   State<ColorPickerWidget> createState() => _ColorPickerWidgetState();
@@ -101,13 +101,13 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
                         border: Border.all(
                           color: isSelected
                               ? theme.colorScheme.onSurface
-                              : theme.colorScheme.outlineVariant.withOpacity(0.3),
+                              : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                           width: isSelected ? 3 : 2,
                         ),
                         boxShadow: [
                           if (isSelected)
                             BoxShadow(
-                              color: color.withOpacity(0.5),
+                              color: color.withValues(alpha: 0.5),
                               blurRadius: 8,
                               spreadRadius: 2,
                             ),

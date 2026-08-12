@@ -3,12 +3,12 @@ import 'package:safe/features/analytics/domain/models/habit_analytics.dart';
 
 /// Widget displaying habit completion metrics
 class HabitMetricsWidget extends StatelessWidget {
-  final HabitAnalytics habitAnalytics;
 
   const HabitMetricsWidget({
-    Key? key,
+    super.key,
     required this.habitAnalytics,
-  }) : super(key: key);
+  });
+  final HabitAnalytics habitAnalytics;
 
   @override
   Widget build(BuildContext context) {
@@ -126,15 +126,15 @@ class HabitMetricsWidget extends StatelessWidget {
 }
 
 class _StatItem extends StatelessWidget {
-  final String label;
-  final String value;
-  final String subLabel;
 
   const _StatItem({
     required this.label,
     required this.value,
     required this.subLabel,
   });
+  final String label;
+  final String value;
+  final String subLabel;
 
   @override
   Widget build(BuildContext context) {

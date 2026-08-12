@@ -145,7 +145,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
 
             // Today's Activity
             Text(
-              'Today\'s Activity',
+              "Today's Activity",
               style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),

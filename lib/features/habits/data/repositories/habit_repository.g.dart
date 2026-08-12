@@ -6,10 +6,10 @@ part of 'habit_repository.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$habitRepositoryHash() => r'ea0054287493616ce05ee36d260402c724ae282e';
+String _$habitRepositoryHash() => r'ad0f5f938dcb0518834f6168e958ee16334c572a';
 
 /// Riverpod provider for HabitRepository
-/// Using Firestore datasource with production security rules
+/// Using HTTP datasource (Express.js backend with MongoDB)
 ///
 /// Copied from [habitRepository].
 @ProviderFor(habitRepository)

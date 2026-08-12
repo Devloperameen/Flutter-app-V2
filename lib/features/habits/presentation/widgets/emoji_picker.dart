@@ -4,14 +4,14 @@ import 'package:safe/features/habits/domain/constants/habit_constants.dart';
 
 /// Emoji picker widget for selecting habit emojis
 class EmojiPicker extends StatefulWidget {
-  final String selectedEmoji;
-  final ValueChanged<String> onEmojiSelected;
 
   const EmojiPicker({
     super.key,
     required this.selectedEmoji,
     required this.onEmojiSelected,
   });
+  final String selectedEmoji;
+  final ValueChanged<String> onEmojiSelected;
 
   @override
   State<EmojiPicker> createState() => _EmojiPickerState();
@@ -60,10 +60,10 @@ class _EmojiPickerState extends State<EmojiPicker> {
           margin: const EdgeInsets.all(AppSpacing.lg),
           padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
             border: Border.all(
-              color: theme.colorScheme.primary.withOpacity(0.2),
+              color: theme.colorScheme.primary.withValues(alpha: 0.2),
             ),
           ),
           child: Center(
@@ -95,16 +95,16 @@ class _EmojiPickerState extends State<EmojiPicker> {
                   setState(() => _selectedEmoji = emoji);
                   widget.onEmojiSelected(emoji);
                 },
-                child: Container(
+                child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? theme.colorScheme.primary.withOpacity(0.2)
+                        ? theme.colorScheme.primary.withValues(alpha: 0.2)
                         : theme.colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
                     border: Border.all(
                       color: isSelected
                           ? theme.colorScheme.primary
-                          : theme.colorScheme.outlineVariant.withOpacity(0.3),
+                          : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                       width: isSelected ? 2 : 1,
                     ),
                   ),

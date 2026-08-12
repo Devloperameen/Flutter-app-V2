@@ -9,7 +9,7 @@ class ContentRepository {
       // In production, would fetch from Express.js backend
       return Stream.periodic(
         const Duration(hours: 1),
-        (count) => _getDefaultQuote(count),
+        _getDefaultQuote,
       );
     } catch (e) {
       log.e('❌ Failed to create quotes stream: $e');

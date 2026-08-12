@@ -191,7 +191,6 @@ abstract final class AppColors {
       seedColor: primary ?? primarySeed,
       secondary: secondarySeed,
       tertiary: tertiarySeed,
-      brightness: Brightness.light,
       surface: premiumOffWhite,
     );
   }

@@ -7,14 +7,15 @@
 /// 
 /// This file provides instances of all HTTP datasources
 /// for use throughout the application
+library;
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:safe/core/network/api_client.dart';
 import 'package:safe/core/network/http_auth_datasource.dart';
-import 'package:safe/features/habits/data/datasources/http_habit_datasource.dart';
-import 'package:safe/features/community/data/datasources/http_community_chat_datasource.dart';
-import 'package:safe/core/providers/core_providers.dart';
 import 'package:safe/core/network/http_upload_datasource.dart';
+import 'package:safe/core/providers/core_providers.dart';
+import 'package:safe/features/community/data/datasources/http_community_chat_datasource.dart';
+import 'package:safe/features/habits/data/datasources/http_habit_datasource.dart';
+
 part 'http_datasources_providers.g.dart';
 
 // ─── Auth Datasource ────────────────────────────────

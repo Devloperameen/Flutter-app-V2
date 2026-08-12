@@ -6,6 +6,7 @@
 /// - Profile images
 /// - Post images & videos
 /// - Message attachments
+library;
 
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -15,8 +16,6 @@ import 'package:safe/core/utils/app_logger.dart';
 
 /// File upload response
 class UploadResponse {
-  final String url;
-  final String filename;
 
   UploadResponse({
     required this.url,
@@ -29,13 +28,15 @@ class UploadResponse {
       filename: json['filename'] as String,
     );
   }
+  final String url;
+  final String filename;
 }
 
 /// HTTP file upload datasource
 class HttpUploadDatasource {
-  final ApiClient apiClient;
 
   HttpUploadDatasource({required this.apiClient});
+  final ApiClient apiClient;
 
   // ─── Profile Upload ────────────────────────────
 
@@ -66,7 +67,7 @@ class HttpUploadDatasource {
 
       // Upload to backend
       final response = await apiClient.post(
-        '${ApiEndpoints.baseUrl}/uploads/avatar',
+        '/uploads/avatar',
         data: formData,
       );
 
@@ -105,7 +106,7 @@ class HttpUploadDatasource {
       });
 
       final response = await apiClient.post(
-        '${ApiEndpoints.baseUrl}/uploads/post-image',
+        '/uploads/post-image',
         data: formData,
       );
 
@@ -146,7 +147,7 @@ class HttpUploadDatasource {
       });
 
       final response = await apiClient.post(
-        '${ApiEndpoints.baseUrl}/uploads/post-video',
+        '/uploads/post-video',
         data: formData,
         onSendProgress: (count, total) {
           if (onProgress != null) {
@@ -196,7 +197,7 @@ class HttpUploadDatasource {
       });
 
       final response = await apiClient.post(
-        '${ApiEndpoints.baseUrl}/uploads/attachment',
+        '/uploads/attachment',
         data: formData,
         onSendProgress: onProgress != null
             ? (count, total) {
@@ -231,7 +232,7 @@ class HttpUploadDatasource {
 
       final results = <UploadResponse>[];
 
-      for (int i = 0; i < filePaths.length; i++) {
+      for (var i = 0; i < filePaths.length; i++) {
         final response = await uploadPostImage(filePath: filePaths[i]);
         results.add(response);
 

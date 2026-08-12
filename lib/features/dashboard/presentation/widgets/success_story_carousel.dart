@@ -5,12 +5,12 @@ import 'package:safe/features/dashboard/domain/models/success_story.dart';
 
 /// Success story carousel showing inspiring stories
 class SuccessStoryCarousel extends StatelessWidget {
-  final List<SuccessStory> stories;
 
   const SuccessStoryCarousel({
     super.key,
     required this.stories,
   });
+  final List<SuccessStory> stories;
 
   @override
   Widget build(BuildContext context) {
@@ -56,9 +56,9 @@ class SuccessStoryCarousel extends StatelessWidget {
 }
 
 class _StoryCard extends StatelessWidget {
-  final SuccessStory story;
 
   const _StoryCard({required this.story});
+  final SuccessStory story;
 
   @override
   Widget build(BuildContext context) {

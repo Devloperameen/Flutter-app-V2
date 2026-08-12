@@ -8,12 +8,12 @@ import 'package:safe/core/utils/app_logger.dart';
 import 'package:safe/features/auth/presentation/providers/auth_provider.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
-  final String? initialEmail;
 
   const ForgotPasswordScreen({
     super.key,
     this.initialEmail,
   });
+  final String? initialEmail;
 
   @override
   ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
@@ -89,7 +89,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   String _formatErrorMessage(String error) {
-    String message = error;
+    var message = error;
     
     if (message.contains('user-not-found')) {
       return 'No account found with this email address.';
@@ -98,7 +98,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     } else if (message.contains('too-many-requests')) {
       return 'Too many requests. Please try again later.';
     } else if (message.contains('Exception:') || message.contains('Failure:')) {
-      message = message.replaceAll(RegExp(r'Exception:|Failure:'), '').trim();
+      message = message.replaceAll(RegExp('Exception:|Failure:'), '').trim();
     }
     
     return message.isEmpty ? 'Password reset failed. Please try again.' : message;
@@ -134,7 +134,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 ),
                 SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Enter your email and we\'ll send you a link to reset your password.',
+                  "Enter your email and we'll send you a link to reset your password.",
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.textTheme.bodySmall?.color,
                   ),
@@ -147,8 +147,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
-                      border: Border.all(color: Colors.green, width: 1),
+                      color: Colors.green.withValues(alpha: 0.1),
+                      border: Border.all(color: Colors.green),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -172,8 +172,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      border: Border.all(color: Colors.red, width: 1),
+                      color: Colors.red.withValues(alpha: 0.1),
+                      border: Border.all(color: Colors.red),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
