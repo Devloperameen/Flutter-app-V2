@@ -8,7 +8,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { authenticate, optional } = require('../middleware/authMiddleware');
+const { authenticate, optional } = require('../middleware/auth');
 const analyticsController = require('../controllers/analyticsController');
 
 /**

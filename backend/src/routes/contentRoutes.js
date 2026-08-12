@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { authenticate, optional } = require('../middleware/authMiddleware');
+const { authenticate, optional } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/rateLimiter');
 const contentController = require('../controllers/contentController');
 

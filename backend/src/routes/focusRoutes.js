@@ -8,7 +8,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../middleware/authMiddleware');
+const { authenticate } = require('../middleware/auth');
 const { userBasedLimiter } = require('../middleware/rateLimiter');
 const focusSessionController = require('../controllers/focusSessionController');
 

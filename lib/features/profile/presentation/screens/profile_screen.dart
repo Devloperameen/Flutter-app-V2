@@ -405,7 +405,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   child: _isUploadingAvatar
                       ? const CircularProgressIndicator(strokeWidth: 2)
                       : fullAvatarUrl != null
-                          ? CircleAvatar(radius: 44, backgroundImage: NetworkImage(fullAvatarUrl))
+                          ? ClipOval(
+                              child: Image.network(
+                                fullAvatarUrl,
+                                width: 88,
+                                height: 88,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => CircleAvatar(
+                                  radius: 44,
+                                  backgroundColor: theme.colorScheme.primaryContainer,
+                                  child: Text(initial, style: theme.textTheme.displayMedium?.copyWith(color: theme.colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold)),
+                                ),
+                                loadingBuilder: (context, child, progress) {
+                                  if (progress == null) return child;
+                                  return Center(
+                                    child: CircularProgressIndicator(
+                                      value: progress.expectedTotalBytes != null
+                                          ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
+                                          : null,
+                                    ),
+                                  );
+                                },
+                              ),
+                            )
                           : CircleAvatar(
                               radius: 44,
                               backgroundColor: theme.colorScheme.primaryContainer,
@@ -429,7 +451,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
           decoration: BoxDecoration(color: AppColors.secondarySeed.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(AppSpacing.chipRadius)),
-          child: Text('Architect Level 5', style: theme.textTheme.labelMedium?.copyWith(color: AppColors.secondarySeed, fontWeight: FontWeight.bold)),
+          child: Text('Architect Level ${user?.level ?? 1}', style: theme.textTheme.labelMedium?.copyWith(color: AppColors.secondarySeed, fontWeight: FontWeight.bold)),
         ),
       ],
     );
