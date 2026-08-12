@@ -57,6 +57,9 @@ ios/Runner/GoogleService-Info.plist
 .env
 .env.local
 .env.*.local
+backend/.env
+backend/.env.local
+backend/.env.*.local
 
 # API keys
 **/api_keys.dart
