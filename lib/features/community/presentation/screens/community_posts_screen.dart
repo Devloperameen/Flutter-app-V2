@@ -283,35 +283,75 @@ class _PostCardState extends ConsumerState<_PostCard> {
           const SizedBox(height: AppSpacing.sm),
 
           // Post Image
-          if (widget.post.imageUrl != null) ...[
+          if (widget.post.imageUrl != null && widget.post.imageUrl!.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.sm),
-            Image.network(
-              widget.post.imageUrl!,
-              width: double.infinity,
-              height: 300,
-              fit: BoxFit.cover,
-              // ✅ FIXED: Add loading indicator
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  height: 300,
-                  width: double.infinity,
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  child: const Center(
-                    child: SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                widget.post.imageUrl!,
+                width: double.infinity,
+                height: 300,
+                fit: BoxFit.cover,
+                // ✅ FIXED: Enhanced loading and error handling
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 300,
+                    width: double.infinity,
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(
+                            width: 40,
+                            height: 40,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Loading image...',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
-              errorBuilder: (_, _, _) => Container(
-                height: 200,
-                color: theme.colorScheme.surfaceContainerHighest,
-                child: const Center(
-                  child: Icon(Icons.broken_image_outlined),
-                ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 300,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.broken_image_outlined,
+                            size: 48,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Image failed to load',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -402,38 +442,42 @@ class _PostCardState extends ConsumerState<_PostCard> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-                  // Comment Input
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _commentController,
-                          decoration: InputDecoration(
-                            hintText: 'Write a comment...',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.md,
-                              vertical: AppSpacing.sm,
-                            ),
-                            isDense: true,
+                  const SizedBox(height: AppSpacing.md),
+                  // Coming Soon Message
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.comment_outlined,
+                          size: 40,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(
+                          'Comments Coming Soon',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      IconButton.filled(
-                        onPressed: _addComment,
-                        icon: const Icon(Icons.send),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    'Comments will appear here',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'We\'re working on adding comments to posts. Check back soon!',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
                 ],
