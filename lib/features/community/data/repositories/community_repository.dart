@@ -121,6 +121,13 @@ class CommunityRepository {
 
   static String? _sanitizeUrl(String? url) {
     if (url == null || url.isEmpty) return null;
+    
+    // If it's a relative path starting with /uploads, prepend the backend host
+    if (url.startsWith('/uploads')) {
+      const String hostUrl = 'https://flutter-app-v2.onrender.com';
+      return '$hostUrl$url';
+    }
+    
     return url;
   }
 

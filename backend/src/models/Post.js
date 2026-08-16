@@ -17,7 +17,10 @@ const postSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      required: true,
+      required: function() {
+        return !(this.imageUrl || this.videoUrl);
+      },
+      default: '',
     },
     imageUrl: {
       type: String,

@@ -135,8 +135,12 @@ class CommunityNotifier extends _$CommunityNotifier {
       });
 
       // ✅ FIXED: Use correct upload endpoints
-      final fileName = file.path.split('/').last;
-      final isImage = fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png');
+      final fileName = file.path.split('/').last.toLowerCase();
+      final isImage = fileName.endsWith('.jpg') || 
+                      fileName.endsWith('.jpeg') || 
+                      fileName.endsWith('.png') ||
+                      fileName.endsWith('.webp') ||
+                      fileName.endsWith('.gif');
       final uploadEndpoint = isImage ? '/uploads/post-image' : '/uploads/post-video';
 
       final response = await apiClient.dio.post(
