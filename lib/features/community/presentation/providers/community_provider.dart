@@ -35,7 +35,7 @@ Stream<List<Post>> communityPostsStream(CommunityPostsStreamRef ref) async* {
   });
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class CommunityNotifier extends _$CommunityNotifier {
   @override
   FutureOr<List<Post>> build() async {

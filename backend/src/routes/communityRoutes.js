@@ -25,6 +25,7 @@ router.use(authenticate);
 router.get('/posts', postController.getPosts);
 router.post('/posts', postController.createPost);
 router.post('/posts/:id/like', postController.toggleLike);
+router.post('/posts/:id/comments', postController.addComment);
 
 /**
  * ─────────────────────────────────────────────────

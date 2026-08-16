@@ -4,6 +4,8 @@ import 'package:safe/core/design/design.dart';
 import 'package:safe/features/community/domain/models/post.dart';
 import 'package:safe/features/community/presentation/providers/community_provider.dart';
 import 'package:safe/features/community/presentation/screens/create_post_screen.dart';
+import 'package:safe/features/community/presentation/widgets/post_video_player.dart';
+import 'package:safe/features/community/presentation/widgets/post_video_player.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// Community Posts Screen with Like, Share, and Comment functionality
@@ -13,7 +15,7 @@ class CommunityPostsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final postsAsync = ref.watch(communityPostsStreamProvider);
+    final postsAsync = ref.watch(communityNotifierProvider);
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -70,7 +72,7 @@ class CommunityPostsScreen extends ConsumerWidget {
 
           return RefreshIndicator(
             onRefresh: () async {
-              ref.invalidate(communityPostsStreamProvider);
+              ref.invalidate(communityNotifierProvider);
             },
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
@@ -112,7 +114,7 @@ class CommunityPostsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               FilledButton.tonal(
-                onPressed: () => ref.refresh(communityPostsStreamProvider),
+                onPressed: () => ref.refresh(communityNotifierProvider),
                 child: const Text('Retry'),
               ),
             ],
@@ -283,13 +285,20 @@ class _PostCardState extends ConsumerState<_PostCard> {
           const SizedBox(height: AppSpacing.sm),
 
           // Post Image
-          if (widget.post.imageUrl != null && widget.post.imageUrl!.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.sm),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                widget.post.imageUrl!,
-                width: double.infinity,
+          if (widget.post.imageUrl != null && widget.post.imageUrl!.isNotEmpty) Builder(
+            builder: (context) {
+              final rawUrl = widget.post.imageUrl!;
+              final fullUrl = rawUrl.startsWith('http') 
+                  ? rawUrl 
+                  : 'https://flutter-app-v2.onrender.com${rawUrl.startsWith('/') ? rawUrl : '/$rawUrl'}';
+              return Column(
+                children: [
+                  const SizedBox(height: AppSpacing.sm),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      fullUrl,
+                      width: double.infinity,
                 height: 300,
                 fit: BoxFit.cover,
                 // ✅ FIXED: Enhanced loading and error handling
@@ -354,7 +363,28 @@ class _PostCardState extends ConsumerState<_PostCard> {
                 },
               ),
             ),
-          ],
+                ],
+              );
+            },
+          ),
+
+          const SizedBox(height: AppSpacing.sm),
+
+          // Post Video
+          if (widget.post.videoUrl != null && widget.post.videoUrl!.isNotEmpty) Builder(
+            builder: (context) {
+              final rawUrl = widget.post.videoUrl!;
+              final fullUrl = rawUrl.startsWith('http') 
+                  ? rawUrl 
+                  : 'https://flutter-app-v2.onrender.com${rawUrl.startsWith('/') ? rawUrl : '/$rawUrl'}';
+              return Column(
+                children: [
+                  const SizedBox(height: AppSpacing.sm),
+                  PostVideoPlayer(videoUrl: fullUrl),
+                ],
+              );
+            },
+          ),
 
           const SizedBox(height: AppSpacing.sm),
 
@@ -442,43 +472,47 @@ class _PostCardState extends ConsumerState<_PostCard> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  // Coming Soon Message
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _commentController,
+                          decoration: InputDecoration(
+                            hintText: 'Write a comment...',
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: AppSpacing.sm,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide(
+                                color: theme.colorScheme.outlineVariant,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide(
+                                color: theme.colorScheme.outlineVariant,
+                              ),
+                            ),
+                          ),
+                          onSubmitted: (_) => _addComment(),
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.comment_outlined,
-                          size: 40,
+                      const SizedBox(width: AppSpacing.sm),
+                      IconButton(
+                        onPressed: _addComment,
+                        icon: Icon(
+                          Icons.send,
                           color: theme.colorScheme.primary,
                         ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          'Comments Coming Soon',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primaryContainer,
                         ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          'We\'re working on adding comments to posts. Check back soon!',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),

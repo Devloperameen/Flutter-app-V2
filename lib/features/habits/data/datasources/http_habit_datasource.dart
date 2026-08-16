@@ -35,27 +35,17 @@ class HttpHabitDatasource implements IHabitDatasource {
   Stream<List<Habit>> getHabitsStream(String userId) async* {
     try {
       log.i('📡 Fetching habits stream from backend');
-      
+
       // Get initial list
       final response = await apiClient.get(ApiEndpoints.habits);
       final habits = _parseHabitsFromResponse(response);
-      
+
       yield habits;
       log.i('✅ Habits stream fetched: ${habits.length} habits');
-      
-      // For real-time updates, you would implement polling here:
-      // while (true) {
-      //   await Future.delayed(Duration(seconds: 5));
-      //   try {
-      //     final newResponse = await apiClient.get(ApiEndpoints.habits);
-      //     yield _parseHabitsFromResponse(newResponse);
-      //   } catch (e) {
-      //     log.e('Error polling habits: $e');
-      //   }
-      // }
-    } catch (e) {
+    } catch (e, st) {
       log.e('❌ Error fetching habits stream: $e');
-      yield [];
+      // Propagate error so UI can show offline state instead of empty
+      yield* Stream.error(e, st);
     }
   }
 

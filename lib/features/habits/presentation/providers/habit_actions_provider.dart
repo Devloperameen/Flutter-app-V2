@@ -1,9 +1,12 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:safe/core/providers/core_providers.dart';
+import 'package:safe/core/storage/storage_keys.dart';
 import 'package:safe/core/utils/app_logger.dart';
-import 'package:safe/features/auth/data/repositories/auth_repository.dart';
 import 'package:safe/features/habits/data/repositories/habit_repository.dart';
 import 'package:safe/features/habits/domain/models/habit.dart';
 import 'package:uuid/uuid.dart';
+
+import 'package:safe/features/habits/presentation/providers/habits_stream_provider.dart';
 
 part 'habit_actions_provider.g.dart';
 
@@ -22,7 +25,8 @@ Future<void> createHabitAction(
 }) async {
   try {
     log.i('➕ Creating habit: $title');
-    final userId = ref.read(authRepositoryProvider).getCurrentUserId();
+    final storage = ref.read(secureStorageProvider);
+    final userId = await storage.read(StorageKeys.userId);
     if (userId == null || userId.isEmpty) {
       throw Exception('User not authenticated');
     }
@@ -43,6 +47,7 @@ Future<void> createHabitAction(
     );
 
     await repository.createHabit(userId, habit);
+    ref.invalidate(habitsStreamProvider);
     log.i('✅ Habit created successfully');
   } catch (e, st) {
     log.e('❌ Failed to create habit: $e', stackTrace: st);
@@ -58,13 +63,15 @@ Future<void> completeHabitAction(
 ) async {
   try {
     log.i('✅ Completing habit: $habitId');
-    final userId = ref.read(authRepositoryProvider).getCurrentUserId();
+    final storage = ref.read(secureStorageProvider);
+    final userId = await storage.read(StorageKeys.userId);
     if (userId == null || userId.isEmpty) {
       throw Exception('User not authenticated');
     }
 
     final repository = ref.read(habitRepositoryProvider);
     await repository.markHabitComplete(userId, habitId);
+    ref.invalidate(habitsStreamProvider);
     log.i('✅ Habit marked complete');
   } catch (e, st) {
     log.e('❌ Failed to complete habit: $e', stackTrace: st);
@@ -80,13 +87,15 @@ Future<void> undoHabitAction(
 ) async {
   try {
     log.i('↩️ Undoing completion: $habitId');
-    final userId = ref.read(authRepositoryProvider).getCurrentUserId();
+    final storage = ref.read(secureStorageProvider);
+    final userId = await storage.read(StorageKeys.userId);
     if (userId == null || userId.isEmpty) {
       throw Exception('User not authenticated');
     }
 
     final repository = ref.read(habitRepositoryProvider);
     await repository.undoHabitComplete(userId, habitId);
+    ref.invalidate(habitsStreamProvider);
     log.i('✅ Completion undone');
   } catch (e, st) {
     log.e('❌ Failed to undo completion: $e', stackTrace: st);
@@ -102,13 +111,15 @@ Future<void> deleteHabitAction(
 ) async {
   try {
     log.i('🗑️ Deleting habit: $habitId');
-    final userId = ref.read(authRepositoryProvider).getCurrentUserId();
+    final storage = ref.read(secureStorageProvider);
+    final userId = await storage.read(StorageKeys.userId);
     if (userId == null || userId.isEmpty) {
       throw Exception('User not authenticated');
     }
 
     final repository = ref.read(habitRepositoryProvider);
     await repository.deleteHabit(userId, habitId);
+    ref.invalidate(habitsStreamProvider);
     log.i('✅ Habit deleted');
   } catch (e, st) {
     log.e('❌ Failed to delete habit: $e', stackTrace: st);
@@ -124,13 +135,15 @@ Future<void> archiveHabitAction(
 ) async {
   try {
     log.i('📦 Archiving habit: $habitId');
-    final userId = ref.read(authRepositoryProvider).getCurrentUserId();
+    final storage = ref.read(secureStorageProvider);
+    final userId = await storage.read(StorageKeys.userId);
     if (userId == null || userId.isEmpty) {
       throw Exception('User not authenticated');
     }
 
     final repository = ref.read(habitRepositoryProvider);
     await repository.archiveHabit(userId, habitId);
+    ref.invalidate(habitsStreamProvider);
     log.i('✅ Habit archived');
   } catch (e, st) {
     log.e('❌ Failed to archive habit: $e', stackTrace: st);
@@ -146,13 +159,15 @@ Future<void> restoreHabitAction(
 ) async {
   try {
     log.i('♻️ Restoring habit: $habitId');
-    final userId = ref.read(authRepositoryProvider).getCurrentUserId();
+    final storage = ref.read(secureStorageProvider);
+    final userId = await storage.read(StorageKeys.userId);
     if (userId == null || userId.isEmpty) {
       throw Exception('User not authenticated');
     }
 
     final repository = ref.read(habitRepositoryProvider);
     await repository.restoreHabit(userId, habitId);
+    ref.invalidate(habitsStreamProvider);
     log.i('✅ Habit restored');
   } catch (e, st) {
     log.e('❌ Failed to restore habit: $e', stackTrace: st);
@@ -168,13 +183,15 @@ Future<void> duplicateHabitAction(
 ) async {
   try {
     log.i('📋 Duplicating habit: $habitId');
-    final userId = ref.read(authRepositoryProvider).getCurrentUserId();
+    final storage = ref.read(secureStorageProvider);
+    final userId = await storage.read(StorageKeys.userId);
     if (userId == null || userId.isEmpty) {
       throw Exception('User not authenticated');
     }
 
     final repository = ref.read(habitRepositoryProvider);
     await repository.duplicateHabit(userId, habitId);
+    ref.invalidate(habitsStreamProvider);
     log.i('✅ Habit duplicated');
   } catch (e, st) {
     log.e('❌ Failed to duplicate habit: $e', stackTrace: st);
@@ -190,13 +207,15 @@ Future<void> reorderHabitsAction(
 ) async {
   try {
     log.i('🔄 Reordering ${habitIds.length} habits');
-    final userId = ref.read(authRepositoryProvider).getCurrentUserId();
+    final storage = ref.read(secureStorageProvider);
+    final userId = await storage.read(StorageKeys.userId);
     if (userId == null || userId.isEmpty) {
       throw Exception('User not authenticated');
     }
 
     final repository = ref.read(habitRepositoryProvider);
     await repository.reorderHabits(userId, habitIds);
+    ref.invalidate(habitsStreamProvider);
     log.i('✅ Habits reordered');
   } catch (e, st) {
     log.e('❌ Failed to reorder habits: $e', stackTrace: st);

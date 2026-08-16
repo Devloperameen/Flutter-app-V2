@@ -6,7 +6,7 @@ part of 'habits_stream_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$habitsStreamHash() => r'b90fec00b8c6c8d12b454524bcf5fdbe0b5cc37c';
+String _$habitsStreamHash() => r'1eb8fe6e47ee25051e7447248316256f36e4a65e';
 
 /// Stream all habits for the current user
 /// Rebuilds UI automatically when Firestore data changes
@@ -14,7 +14,7 @@ String _$habitsStreamHash() => r'b90fec00b8c6c8d12b454524bcf5fdbe0b5cc37c';
 ///
 /// Copied from [habitsStream].
 @ProviderFor(habitsStream)
-final habitsStreamProvider = AutoDisposeStreamProvider<List<Habit>>.internal(
+final habitsStreamProvider = StreamProvider<List<Habit>>.internal(
   habitsStream,
   name: r'habitsStreamProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -26,7 +26,7 @@ final habitsStreamProvider = AutoDisposeStreamProvider<List<Habit>>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef HabitsStreamRef = AutoDisposeStreamProviderRef<List<Habit>>;
+typedef HabitsStreamRef = StreamProviderRef<List<Habit>>;
 String _$completionPercentageHash() =>
     r'86d157e8a665836e6f857440120e15470d205126';
 

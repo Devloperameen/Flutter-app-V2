@@ -14,6 +14,7 @@ class PostVideoPlayer extends StatefulWidget {
 class _PostVideoPlayerState extends State<PostVideoPlayer> {
   late VideoPlayerController _controller;
   bool _isInitialized = false;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -22,6 +23,10 @@ class _PostVideoPlayerState extends State<PostVideoPlayer> {
       ..initialize().then((_) {
         setState(() {
           _isInitialized = true;
+        });
+      }).catchError((error) {
+        setState(() {
+          _hasError = true;
         });
       });
   }
@@ -44,6 +49,27 @@ class _PostVideoPlayerState extends State<PostVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    if (_hasError) {
+      return Container(
+        width: double.infinity,
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.black12,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, color: Colors.red, size: 40),
+              SizedBox(height: 8),
+              Text('Failed to load video'),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (!_isInitialized) {
       return Container(
         width: double.infinity,

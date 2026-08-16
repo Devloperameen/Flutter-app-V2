@@ -397,11 +397,11 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle, size: 64, color: theme.colorScheme.tertiary.withValues(alpha: 0.5)),
+                  Icon(Icons.track_changes_rounded, size: 64, color: theme.colorScheme.tertiary.withValues(alpha: 0.5)),
                   SizedBox(height: AppSpacing.lg),
                   Text('No habits yet', style: theme.textTheme.headlineSmall),
                   SizedBox(height: AppSpacing.sm),
-                  Text('Create your first habit', style: theme.textTheme.bodyMedium),
+                  Text('Start tracking your daily habits', style: theme.textTheme.bodyMedium),
                   SizedBox(height: AppSpacing.xl),
                   FilledButton.icon(
                     onPressed: _showCreateDialog,
@@ -564,8 +564,30 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Text('Error: $error'),
+        error: (err, stack) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.wifi_off_rounded, size: 64, color: Colors.orange),
+                const SizedBox(height: 16),
+                const Text('Could not load habits', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text(
+                  'Check your internet connection and make sure the server is running.',
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () => ref.invalidate(habitsStreamProvider),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

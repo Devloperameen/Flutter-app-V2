@@ -121,9 +121,7 @@ class CommunityRepository {
 
   static String? _sanitizeUrl(String? url) {
     if (url == null || url.isEmpty) return null;
-    if (url.startsWith('https://')) return url;
-    log.w('⚠️ Dropping non‑HTTPS media URL: $url');
-    return null;
+    return url;
   }
 
   // ---------------------------------------------------------------------------
@@ -154,13 +152,10 @@ class CommunityRepository {
   Future<void> addComment({required String postId, required String userId, required String userName, required String comment}) async {
     try {
       log.i('💬 Adding comment to post: $postId');
-      // Emit comment event via Socket.IO
-      socket.emit('post:comment', {
-        'postId': postId,
-        'userId': userId,
-        'userName': userName,
-        'content': comment,
-      });
+      await _remoteDataSource.apiClient.dio.post(
+        '/community/posts/$postId/comments',
+        data: {'content': comment},
+      );
       log.i('✅ Comment added');
     } catch (e, stackTrace) {
       log.e('❌ Failed to add comment: $e', stackTrace: stackTrace);

@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:safe/core/providers/core_providers.dart';
+import 'package:safe/core/storage/storage_keys.dart';
 import 'package:safe/core/utils/app_logger.dart';
-import 'package:safe/features/auth/data/repositories/auth_repository.dart';
 import 'package:safe/features/habits/data/repositories/habit_repository.dart';
 import 'package:safe/features/habits/domain/models/habit.dart';
 
@@ -9,17 +10,20 @@ part 'habits_stream_provider.g.dart';
 /// Stream all habits for the current user
 /// Rebuilds UI automatically when Firestore data changes
 /// NO manual refresh needed, NO optimistic updates
-@riverpod
-Stream<List<Habit>> habitsStream(HabitsStreamRef ref) {
-  final userId = ref.watch(authRepositoryProvider).getCurrentUserId();
-  
+@Riverpod(keepAlive: true)
+Stream<List<Habit>> habitsStream(HabitsStreamRef ref) async* {
+  final storage = ref.read(secureStorageProvider);
+  final userId = await storage.read(StorageKeys.userId);
+
   if (userId == null || userId.isEmpty) {
-    log.w('⚠️ No authenticated user');
-    return Stream.value([]);
+    log.w('⚠️ No authenticated user — returning empty habits stream');
+    yield [];
+    return;
   }
 
   final repository = ref.watch(habitRepositoryProvider);
-  return repository.getHabitsStream(userId);
+  // Let errors propagate so UI can distinguish offline vs empty
+  yield* repository.getHabitsStream(userId);
 }
 
 /// Get total completion percentage

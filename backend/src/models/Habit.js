@@ -58,7 +58,7 @@ const habitSchema = new mongoose.Schema(
     category: {
       type: String,
       enum: {
-        values: ['health', 'productivity', 'learning', 'fitness', 'other'],
+        values: ['health', 'productivity', 'learning', 'fitness', 'mindfulness', 'creativity', 'social', 'entertainment', 'other'],
         message: 'Invalid category',
       },
       default: 'other',

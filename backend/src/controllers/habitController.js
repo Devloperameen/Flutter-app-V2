@@ -46,6 +46,49 @@ const getHabits = async (req, res, next) => {
       .skip(skip)
       .limit(limitNum);
 
+    // ─── Auto-reset daily state ─────────────────
+    // Compare dates using local midnight to avoid timezone edge cases
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+    const yesterdayMidnight = new Date(todayMidnight);
+    yesterdayMidnight.setDate(yesterdayMidnight.getDate() - 1);
+
+    const staleHabits = [];
+    for (const habit of habits) {
+      let dirty = false;
+
+      if (habit.lastCompletedDate) {
+        const lastDay = new Date(habit.lastCompletedDate);
+        lastDay.setHours(0, 0, 0, 0);
+
+        // If completedToday is true but lastCompletedDate is NOT today → reset
+        if (habit.completedToday && lastDay.getTime() !== todayMidnight.getTime()) {
+          habit.completedToday = false;
+          dirty = true;
+        }
+
+        // Streak break: if last completion was before yesterday → reset streak
+        if (lastDay.getTime() < yesterdayMidnight.getTime() && habit.currentStreak > 0) {
+          habit.currentStreak = 0;
+          dirty = true;
+        }
+      } else if (habit.completedToday) {
+        // No lastCompletedDate but completedToday is true — data inconsistency, fix it
+        habit.completedToday = false;
+        dirty = true;
+      }
+
+      if (dirty) staleHabits.push(habit.save());
+    }
+
+    // Save stale habits in parallel (fire-and-forget, don't block response)
+    if (staleHabits.length > 0) {
+      Promise.all(staleHabits).catch((e) =>
+        logger.warn(`⚠️ Daily reset partial failure: ${e.message}`)
+      );
+      logger.info(`🔄 Daily reset applied to ${staleHabits.length} habit(s)`);
+    }
+
     const total = await Habit.countDocuments(filter);
 
     logger.info(`✅ Fetched ${habits.length} habits for user ${userId}`);

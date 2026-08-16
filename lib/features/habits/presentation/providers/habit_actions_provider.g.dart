@@ -6,7 +6,7 @@ part of 'habit_actions_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$createHabitActionHash() => r'dcccad12fbcb1b8c401d5787c6b82bd7890902c1';
+String _$createHabitActionHash() => r'db4005309f75778d3e61c5b5ff4fa15de79154a1';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -285,7 +285,7 @@ class _CreateHabitActionProviderElement
 }
 
 String _$completeHabitActionHash() =>
-    r'8370d037bd90a52909652bbf8f2150b633007bb1';
+    r'f0ba570eb519b53580cc0de925d19b7762def387';
 
 /// Provider for completing a habit
 ///
@@ -417,7 +417,7 @@ class _CompleteHabitActionProviderElement
   String get habitId => (origin as CompleteHabitActionProvider).habitId;
 }
 
-String _$undoHabitActionHash() => r'47b4481196027083c0a074e9cd21c14fa7c60ed2';
+String _$undoHabitActionHash() => r'f45afe5e08fb8b512a1a240b4d135a03cba19f14';
 
 /// Provider for undoing habit completion
 ///
@@ -549,7 +549,7 @@ class _UndoHabitActionProviderElement
   String get habitId => (origin as UndoHabitActionProvider).habitId;
 }
 
-String _$deleteHabitActionHash() => r'de7bdf919926b49b41aeece07056db969369eb90';
+String _$deleteHabitActionHash() => r'6d7e76c690ea4180e700b13e15c09d6a40d1e8e0';
 
 /// Provider for deleting a habit
 ///
@@ -682,7 +682,7 @@ class _DeleteHabitActionProviderElement
 }
 
 String _$archiveHabitActionHash() =>
-    r'22c4d6af716046e42573b18ebe480cb31a2f32cb';
+    r'53dfd11c20c90ef40f167083f1144070c6ddc84f';
 
 /// Provider for archiving a habit
 ///
@@ -815,7 +815,7 @@ class _ArchiveHabitActionProviderElement
 }
 
 String _$restoreHabitActionHash() =>
-    r'7d31ec3bd6ea48d14f8c98eace1735542d800634';
+    r'65d4a805e78a7912269e162d02f4908d982be5a9';
 
 /// Provider for restoring a habit
 ///
@@ -948,7 +948,7 @@ class _RestoreHabitActionProviderElement
 }
 
 String _$duplicateHabitActionHash() =>
-    r'd39a1c27e7ba4f529abb610c646bdfb076c84a5b';
+    r'44227a554222a1e9c6fde302b57f957445c4b156';
 
 /// Provider for duplicating a habit
 ///
@@ -1081,7 +1081,7 @@ class _DuplicateHabitActionProviderElement
 }
 
 String _$reorderHabitsActionHash() =>
-    r'018b0706a778ba232f415c709fa33a6013980209';
+    r'7582031b5faec507cf6a417fabccd69cb747510d';
 
 /// Provider for reordering habits
 ///

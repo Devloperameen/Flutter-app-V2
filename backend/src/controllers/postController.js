@@ -82,8 +82,35 @@ const toggleLike = async (req, res, next) => {
   }
 };
 
+const addComment = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+    
+    if (!content) {
+      return sendResponse(res, error('Comment content is required', 400));
+    }
+
+    const post = await Post.findById(id);
+
+    if (!post) {
+      return sendResponse(res, error('Post not found', 404));
+    }
+
+    // For now, we just increment the commentCount since full comment tracking
+    // requires a separate Comment model or a comments array.
+    post.commentCount = (post.commentCount || 0) + 1;
+    await post.save();
+
+    sendResponse(res, success({ commentCount: post.commentCount }, 'Comment added', 201));
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getPosts,
   createPost,
-  toggleLike
+  toggleLike,
+  addComment
 };

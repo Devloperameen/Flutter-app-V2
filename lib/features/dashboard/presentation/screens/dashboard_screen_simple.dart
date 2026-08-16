@@ -2,13 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:safe/core/router/route_names.dart';
 import 'package:safe/features/auth/domain/models/user.dart';
 import 'package:safe/features/auth/presentation/providers/auth_provider.dart';
 import 'package:safe/features/dashboard/presentation/screens/timer_page.dart';
+import 'package:safe/features/dashboard/presentation/screens/video_player_screen.dart';
+import 'package:safe/features/focus_timer/presentation/providers/focus_providers.dart';
 import 'package:safe/features/habits/presentation/providers/habits_stream_provider.dart';
 import 'package:safe/features/habits/presentation/providers/habit_actions_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Talk with Sadiq - Mindset & Habit Transformation App
 class DashboardScreenSimple extends ConsumerStatefulWidget {
@@ -106,17 +109,12 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
     super.dispose();
   }
 
-  Future<void> _openVideo(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open video')),
-        );
-      }
-    }
+  void _openVideo(String url, [String title = 'Video']) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => VideoPlayerScreen(videoUrl: url, title: title),
+      ),
+    );
   }
 
   @override
@@ -237,41 +235,83 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
 
   // A. HEADER SECTION
   Widget _buildHeaderSection(ThemeData theme, AsyncValue<User?> authState, String greeting, String dateString) {
+    final user = authState.valueOrNull;
+    final avatarUrlRaw = user?.avatarUrl;
+    final avatarUrl = avatarUrlRaw != null && avatarUrlRaw.isNotEmpty
+        ? (avatarUrlRaw.startsWith('http') 
+            ? avatarUrlRaw 
+            : 'https://flutter-app-v2.onrender.com${avatarUrlRaw.startsWith('/') ? avatarUrlRaw : '/$avatarUrlRaw'}')
+        : null;
+    final initials = (user?.firstName.isNotEmpty == true)
+        ? user!.firstName[0].toUpperCase()
+        : 'U';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                greeting,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                dateString,
-                style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-              ),
-            ],
-          ),
-          const Spacer(),
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [primaryBlue, darkBlue],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: primaryBlue.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                )
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  greeting,
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                if (user?.firstName.isNotEmpty == true)
+                  Text(
+                    user!.firstName,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: primaryBlue),
+                  ),
+                Text(
+                  dateString,
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
+                ),
               ],
             ),
-            child: const Icon(Icons.account_circle_rounded, color: Colors.white, size: 32),
+          ),
+          GestureDetector(
+            onTap: () => context.goNamed(RouteNames.profile),
+            child: Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                gradient: avatarUrl == null
+                    ? const LinearGradient(colors: [primaryBlue, darkBlue])
+                    : null,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryBlue.withValues(alpha: 0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: avatarUrl != null && avatarUrl.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Image.network(
+                        avatarUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Center(
+                          child: Text(initials,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20)),
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Text(initials,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20)),
+                    ),
+            ),
           ),
         ],
       ),
@@ -444,8 +484,9 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
               return GestureDetector(
                 onTap: () {
                   setState(() => _isCarouselAutoScrolling = false);
-                  _openVideo(video['url']!).then((_) {
-                    setState(() => _isCarouselAutoScrolling = true);
+                  _openVideo(video['url']!, video['title']!);
+                  Future.delayed(const Duration(seconds: 1), () {
+                    if (mounted) setState(() => _isCarouselAutoScrolling = true);
                   });
                 },
                 child: Container(
@@ -767,45 +808,97 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
     );
   }
 
-  // F. DAILY MISSION SECTION
+  // F. DAILY MISSION SECTION — real habits data
   Widget _buildMissionSection(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [primaryBlue.withValues(alpha: 0.1), lightBlue.withValues(alpha: 0.1)]),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: primaryBlue.withValues(alpha: 0.3)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    final habitsAsync = ref.watch(habitsStreamProvider);
+    return habitsAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (habits) {
+        final active = habits.where((h) => !h.archived).toList();
+        final completed = active.where((h) => h.completedToday).length;
+        final total = active.length;
+        final pct = total == 0 ? 0.0 : completed / total;
+        final pending = active.where((h) => !h.completedToday).toList();
+        final missionTitle = pending.isNotEmpty
+            ? pending.first.title
+            : total > 0 ? 'All habits done! Great work 🎉' : 'Create your first habit';
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [primaryBlue.withValues(alpha: 0.1), lightBlue.withValues(alpha: 0.1)],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: primaryBlue.withValues(alpha: 0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: primaryBlue.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
-                  child: const Icon(Icons.star_rounded, color: primaryBlue, size: 24)),
-                const SizedBox(width: 12),
-                const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text("Today's Mission", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  Text('Complete one deep work session', style: TextStyle(fontSize: 13, color: Colors.grey)),
-                ])),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: primaryBlue.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.star_rounded, color: primaryBlue, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Today's Mission", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          Text(missionTitle, style: const TextStyle(fontSize: 13, color: Colors.grey), maxLines: 2, overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Progress', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+                    Text('$completed / $total habits', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: pct,
+                    minHeight: 6,
+                    backgroundColor: primaryBlue.withValues(alpha: 0.1),
+                    valueColor: const AlwaysStoppedAnimation(primaryBlue),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => context.goNamed(RouteNames.habits),
+                    style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, foregroundColor: Colors.white),
+                    child: Text(pending.isNotEmpty ? 'Complete Next Habit' : 'View All Habits'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Reward: +${completed * 50} XP earned today',
+                  style: const TextStyle(color: primaryBlue, fontWeight: FontWeight.w600, fontSize: 12),
+                ),
               ],
             ),
-            const SizedBox(height: 12),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text('Progress', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
-              const Text('75%', style: TextStyle(fontWeight: FontWeight.bold)),
-            ]),
-            const SizedBox(height: 8),
-            ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearProgressIndicator(value: 0.75, minHeight: 6, backgroundColor: primaryBlue.withValues(alpha: 0.1), valueColor: const AlwaysStoppedAnimation(primaryBlue))),
-            const SizedBox(height: 12),
-            SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () {}, style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, foregroundColor: Colors.white), child: const Text('Continue Mission'))),
-            const SizedBox(height: 8),
-            Text('Reward: +200 XP', style: TextStyle(color: primaryBlue, fontWeight: FontWeight.w600, fontSize: 12)),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -816,41 +909,64 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('Community', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            TextButton(onPressed: () {}, child: const Text('See All')),
-          ]),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Community', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              TextButton(
+                onPressed: () => context.goNamed(RouteNames.community),
+                child: const Text('See All'),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(16), border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5))),
-            child: Column(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+            ),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Container(width: 40, height: 40, decoration: BoxDecoration(gradient: const LinearGradient(colors: [primaryBlue, darkBlue]), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.person_rounded, color: Colors.white, size: 20)),
-                    const SizedBox(width: 12),
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      const Text('Sadiq Ahmed', style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text('Just completed a 50-minute focus session!', style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    ])),
-                  ],
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: primaryBlue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.forum_rounded, color: primaryBlue, size: 28),
                 ),
-                const SizedBox(height: 12),
-                const Row(children: [
-                  Icon(Icons.favorite_rounded, color: Colors.red, size: 18),
-                  SizedBox(width: 4),
-                  Text('45', style: TextStyle(fontSize: 12)),
-                  SizedBox(width: 16),
-                  Icon(Icons.message_rounded, color: primaryBlue, size: 18),
-                  SizedBox(width: 4),
-                  Text('12', style: TextStyle(fontSize: 12)),
-                ]),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Join the Community', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Share wins, ask questions, stay accountable.',
+                        style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 12),
-          SizedBox(width: double.infinity, child: ElevatedButton.icon(onPressed: () {}, icon: const Icon(Icons.forum_rounded), label: const Text('Open Community Chat'), style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, foregroundColor: Colors.white))),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => context.goNamed(RouteNames.community),
+              icon: const Icon(Icons.forum_rounded),
+              label: const Text('Open Community Chat'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryBlue,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -874,7 +990,7 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
               final videoId = video['url']!.split('v=').last.split('&').first;
               final thumbnailUrl = 'https://img.youtube.com/vi/$videoId/maxresdefault.jpg';
               return GestureDetector(
-                onTap: () => _openVideo(video['url']!),
+                onTap: () => _openVideo(video['url']!, video['title']!),
                 child: Container(
                   width: 180,
                   margin: EdgeInsets.only(right: index < _videos.length - 1 ? 12 : 0),
@@ -898,28 +1014,65 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
     );
   }
 
-  // I. STATISTICS SECTION
+  // I. STATISTICS SECTION — real data
   Widget _buildStatisticsSection(ThemeData theme) {
+    final habitsAsync = ref.watch(habitsStreamProvider);
+    final dailyStatsAsync = ref.watch(focusDailyStatsProvider);
+    final streak = ref.watch(totalCurrentStreakProvider);
+
+    final habitsText = habitsAsync.when(
+      data: (h) {
+        final active = h.where((x) => !x.archived).toList();
+        final done = active.where((x) => x.completedToday).length;
+        return '$done/${active.length}';
+      },
+      loading: () => '—',
+      error: (_, __) => '—',
+    );
+
+    final focusText = dailyStatsAsync.when(
+      data: (stats) {
+        final mins = (stats['totalDuration'] as num?)?.toInt() ?? 0;
+        if (mins >= 60) return '${(mins / 60).toStringAsFixed(1)}h';
+        return '${mins}m';
+      },
+      loading: () => '—',
+      error: (_, __) => '0m',
+    );
+
+    final xpText = habitsAsync.when(
+      data: (h) {
+        final done = h.where((x) => x.completedToday).length;
+        return '+${done * 50}';
+      },
+      loading: () => '—',
+      error: (_, __) => '—',
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(16), border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5))),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Weekly Statistics', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Today\'s Statistics', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Row(children: [
-              Expanded(child: _buildStatBox(icon: Icons.timer_rounded, label: 'Focus Time', value: '12.5h', theme: theme)),
+              Expanded(child: _buildStatBox(icon: Icons.timer_rounded,      label: 'Focus Time',  value: focusText,         theme: theme)),
               const SizedBox(width: 12),
-              Expanded(child: _buildStatBox(icon: Icons.task_alt_rounded, label: 'Habits Done', value: '24/28', theme: theme)),
+              Expanded(child: _buildStatBox(icon: Icons.task_alt_rounded,   label: 'Habits Done', value: habitsText,         theme: theme)),
             ]),
             const SizedBox(height: 12),
             Row(children: [
-              Expanded(child: _buildStatBox(icon: Icons.whatshot_rounded, label: 'Current Streak', value: '7 days', theme: theme)),
+              Expanded(child: _buildStatBox(icon: Icons.whatshot_rounded,   label: 'Streak',      value: '$streak days',     theme: theme)),
               const SizedBox(width: 12),
-              Expanded(child: _buildStatBox(icon: Icons.star_rounded, label: 'XP Earned', value: '+850', theme: theme)),
+              Expanded(child: _buildStatBox(icon: Icons.star_rounded,       label: 'XP Today',    value: xpText,             theme: theme)),
             ]),
           ],
         ),
@@ -959,12 +1112,12 @@ class _DashboardScreenSimpleState extends ConsumerState<DashboardScreenSimple> {
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
             children: [
-              _buildActionButton(icon: Icons.play_arrow_rounded, label: 'Focus', color: primaryBlue, onTap: () => _openTimerPage(context, 25, 'Deep Work')),
-              _buildActionButton(icon: Icons.task_alt_rounded, label: 'Habits', color: const Color(0xFF4CAF50), onTap: () {}),
-              _buildActionButton(icon: Icons.forum_rounded, label: 'Community', color: const Color(0xFFFFC107), onTap: () {}),
-              _buildActionButton(icon: Icons.video_library_rounded, label: 'Learning', color: const Color(0xFF9C27B0), onTap: () {}),
-              _buildActionButton(icon: Icons.trending_up_rounded, label: 'Progress', color: const Color(0xFFE91E63), onTap: () {}),
-              _buildActionButton(icon: Icons.account_circle_rounded, label: 'Profile', color: const Color(0xFF00BCD4), onTap: () {}),
+              _buildActionButton(icon: Icons.play_arrow_rounded,      label: 'Focus',     color: primaryBlue,                onTap: () => _openTimerPage(context, 25, 'Deep Work')),
+              _buildActionButton(icon: Icons.task_alt_rounded,        label: 'Habits',    color: const Color(0xFF4CAF50),    onTap: () => context.goNamed(RouteNames.habits)),
+              _buildActionButton(icon: Icons.forum_rounded,           label: 'Community', color: const Color(0xFFFFC107),    onTap: () => context.goNamed(RouteNames.community)),
+              _buildActionButton(icon: Icons.video_library_rounded,   label: 'Learning',  color: const Color(0xFF9C27B0),    onTap: () => context.goNamed(RouteNames.videos)),
+              _buildActionButton(icon: Icons.trending_up_rounded,     label: 'Progress',  color: const Color(0xFFE91E63),    onTap: () => context.goNamed(RouteNames.analyticsFocus)),
+              _buildActionButton(icon: Icons.account_circle_rounded,  label: 'Profile',   color: const Color(0xFF00BCD4),    onTap: () => context.goNamed(RouteNames.profile)),
             ],
           ),
         ],
