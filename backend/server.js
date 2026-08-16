@@ -296,7 +296,7 @@ const startServer = async () => {
     logger.info('✅ Connected to MongoDB');
 
     // 2. Start HTTP Server (which includes Express + Socket.IO)
-    httpServer.listen(PORT, () => {
+    httpServer.listen(PORT, '0.0.0.0', () => {
       logger.info(`
 ╔════════════════════════════════════════════════╗
 ║     FitFlow Backend Server Started 🚀         ║
