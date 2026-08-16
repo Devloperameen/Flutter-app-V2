@@ -38,7 +38,7 @@ abstract final class ApiEndpoints {
   // ─── Community / Posts ───────────────────────────
   static const String posts = '/community/posts';
   static String post(String id) => '/community/posts/$id';
-  static String postLikes(String postId) => '/community/posts/$postId/likes';
+  static String postLikes(String postId) => '/community/posts/$postId/like';
   static String postComments(String postId) => '/community/posts/$postId/comments';
 
   // ─── PHASE 3: Focus Sessions ────────────────────

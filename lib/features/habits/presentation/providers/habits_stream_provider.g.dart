@@ -48,9 +48,9 @@ final completionPercentageProvider = AutoDisposeFutureProvider<double>.internal(
 // ignore: unused_element
 typedef CompletionPercentageRef = AutoDisposeFutureProviderRef<double>;
 String _$totalCurrentStreakHash() =>
-    r'91a6457b8464e51c3d415b08faad9dbde169c77e';
+    r'c2b13c69e112c9b51a7bce93a0862628f9cd7df7';
 
-/// Get total current streak sum
+/// Get max current streak across all habits
 ///
 /// Copied from [totalCurrentStreak].
 @ProviderFor(totalCurrentStreak)
@@ -68,9 +68,9 @@ final totalCurrentStreakProvider = AutoDisposeProvider<int>.internal(
 // ignore: unused_element
 typedef TotalCurrentStreakRef = AutoDisposeProviderRef<int>;
 String _$totalLongestStreakHash() =>
-    r'e63902dcdfd0bf6f0d8d81dad9f77a93bd024158';
+    r'cc47bfb95d404f077942bd338864c0712fda1b72';
 
-/// Get total longest streak sum
+/// Get max longest streak across all habits
 ///
 /// Copied from [totalLongestStreak].
 @ProviderFor(totalLongestStreak)

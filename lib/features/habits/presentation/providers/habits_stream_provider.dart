@@ -36,23 +36,23 @@ Future<double> completionPercentage(CompletionPercentageRef ref) async {
   return (completed / habits.length) * 100;
 }
 
-/// Get total current streak sum
+/// Get max current streak across all habits
 @riverpod
 int totalCurrentStreak(TotalCurrentStreakRef ref) {
   final habitsAsync = ref.watch(habitsStreamProvider);
   return habitsAsync.when(
-    data: (habits) => habits.fold(0, (sum, h) => sum + h.currentStreak),
+    data: (habits) => habits.fold(0, (maxVal, h) => h.currentStreak > maxVal ? h.currentStreak : maxVal),
     loading: () => 0,
     error: (_, _) => 0,
   );
 }
 
-/// Get total longest streak sum
+/// Get max longest streak across all habits
 @riverpod
 int totalLongestStreak(TotalLongestStreakRef ref) {
   final habitsAsync = ref.watch(habitsStreamProvider);
   return habitsAsync.when(
-    data: (habits) => habits.fold(0, (sum, h) => sum + h.longestStreak),
+    data: (habits) => habits.fold(0, (maxVal, h) => h.longestStreak > maxVal ? h.longestStreak : maxVal),
     loading: () => 0,
     error: (_, _) => 0,
   );
